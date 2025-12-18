@@ -23,9 +23,7 @@ type Config struct {
 	}
 }
 
-var AppConfig *Config
-
-func InitConfig() error {
+func InitConfig() (*Config, error) {
 	useFile := false
 
 	if path, ok := os.LookupEnv("EXCHANGEAPP_CONFIG_PATH"); ok && path != "" {
@@ -53,14 +51,13 @@ func InitConfig() error {
 	viper.AutomaticEnv()
 
 	if err := viper.ReadInConfig(); err != nil {
-		return fmt.Errorf("读取配置失败：%w", err)
+		return nil, fmt.Errorf("读取配置失败：%w", err)
 	}
 
 	cfg := &Config{}
 	if err := viper.Unmarshal(cfg); err != nil {
-		return fmt.Errorf("解码失败：%w", err)
+		return nil, fmt.Errorf("解码失败：%w", err)
 	}
 
-	AppConfig = cfg
-	return nil
+	return cfg, nil
 }

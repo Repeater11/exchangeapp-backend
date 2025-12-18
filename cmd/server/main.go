@@ -7,8 +7,9 @@ import (
 )
 
 func main() {
-	if err := config.InitConfig(); err != nil {
+	cfg, err := config.InitConfig()
+	if err != nil {
 		log.Fatalf("配置加载失败：%v", err)
 	}
-	fmt.Println(config.AppConfig.App.Port)
+	fmt.Println(cfg.Database.Password)
 }
