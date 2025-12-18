@@ -10,20 +10,24 @@ import (
 )
 
 type Config struct {
-	App struct {
-		Name string
-		Port string
-	}
-	Database struct {
-		Host     string
-		Port     string
-		User     string
-		Password string
-		Name     string
-	}
+	App      AppConfig
+	Database DatabaseConfig
 }
 
-func InitConfig() (*Config, error) {
+type AppConfig struct {
+	Name string
+	Port int
+}
+
+type DatabaseConfig struct {
+	Host     string
+	Port     int
+	User     string
+	Password string
+	Name     string
+}
+
+func NewConfig() (*Config, error) {
 	useFile := false
 
 	if path, ok := os.LookupEnv("EXCHANGEAPP_CONFIG_PATH"); ok && path != "" {
