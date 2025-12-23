@@ -1,19 +1,28 @@
 package app
 
 import (
+	"exchangeapp/internal/config"
+	"exchangeapp/internal/db"
 	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 type Server struct {
-	e *gin.Engine
+	e  *gin.Engine
+	db *gorm.DB
 }
 
-func NewServer() (*Server, error) {
+func NewServer(cfg *config.Config) (*Server, error) {
 	e := gin.New()
 	e.Use(gin.Logger(), gin.Recovery())
+
+	gormDB, err := db.NewMySQL(&cfg.Database)
+	if err != nil {
+		return nil, err
+	}
 
 	e.GET("/healthz", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
@@ -21,9 +30,22 @@ func NewServer() (*Server, error) {
 		})
 	})
 
-	return &Server{e: e}, nil
+	return &Server{e: e, db: gormDB}, nil
 }
 
 func (s *Server) Run(addr int) error {
 	return s.e.Run(fmt.Sprintf(":%d", addr))
+}
+
+func (s *Server) Close() error {
+	sqlDB, err := s.db.DB()
+	if s.db == nil {
+		return nil
+	}
+
+	if err != nil {
+		return fmt.Errorf("获取底层连接失败：%w", err)
+	}
+
+	return sqlDB.Close()
 }
