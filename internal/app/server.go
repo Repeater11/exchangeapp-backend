@@ -3,6 +3,7 @@ package app
 import (
 	"exchangeapp/internal/config"
 	"exchangeapp/internal/db"
+	"exchangeapp/internal/models"
 	"fmt"
 	"net/http"
 
@@ -22,6 +23,12 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	gormDB, err := db.NewMySQL(&cfg.Database)
 	if err != nil {
 		return nil, err
+	}
+	if err := runMigrations(gormDB); err != nil {
+		if sqlDB, err := gormDB.DB(); err == nil {
+			sqlDB.Close()
+		}
+		return nil, fmt.Errorf("数据库迁移失败：%w", err)
 	}
 
 	e.GET("/healthz", func(ctx *gin.Context) {
@@ -48,4 +55,8 @@ func (s *Server) Close() error {
 	}
 
 	return sqlDB.Close()
+}
+
+func runMigrations(db *gorm.DB) error {
+	return db.AutoMigrate(&models.User{})
 }
