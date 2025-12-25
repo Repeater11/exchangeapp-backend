@@ -45,10 +45,11 @@ func (s *Server) Run(addr int) error {
 }
 
 func (s *Server) Close() error {
-	sqlDB, err := s.db.DB()
 	if s.db == nil {
 		return nil
 	}
+
+	sqlDB, err := s.db.DB()
 
 	if err != nil {
 		return fmt.Errorf("获取底层连接失败：%w", err)
