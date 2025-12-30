@@ -1,4 +1,4 @@
-package repositories
+package repository
 
 import (
 	"errors"
@@ -9,17 +9,17 @@ import (
 	"gorm.io/gorm"
 )
 
-type userRepo struct {
+type UserRepo struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) *userRepo {
-	return &userRepo{db: db}
+func NewUserRepository(db *gorm.DB) *UserRepo {
+	return &UserRepo{db: db}
 }
 
 var ErrUserExists = errors.New("用户名已经存在")
 
-func (r *userRepo) Create(user *models.User) error {
+func (r *UserRepo) Create(user *models.User) error {
 	if err := r.db.Create(user).Error; err != nil {
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return ErrUserExists
