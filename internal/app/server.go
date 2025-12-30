@@ -3,7 +3,10 @@ package app
 import (
 	"exchangeapp/internal/config"
 	"exchangeapp/internal/db"
+	"exchangeapp/internal/handler"
 	"exchangeapp/internal/models"
+	"exchangeapp/internal/repository"
+	"exchangeapp/internal/service"
 	"fmt"
 	"net/http"
 
@@ -30,6 +33,12 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		}
 		return nil, fmt.Errorf("数据库迁移失败：%w", err)
 	}
+
+	userRepo := repository.NewUserRepository(gormDB)
+	userSvc := service.NewUserService(userRepo)
+	userHandler := handler.NewUserHandler(userSvc)
+
+	e.POST("/register", userHandler.Register)
 
 	e.GET("/healthz", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
