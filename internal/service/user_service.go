@@ -4,6 +4,9 @@ import (
 	"exchangeapp/internal/dto"
 	"exchangeapp/internal/models"
 	"exchangeapp/internal/repository"
+	"fmt"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
@@ -15,9 +18,13 @@ func NewUserService(repo repository.UserRepository) *UserService {
 }
 
 func (s *UserService) Register(req dto.RegisterReq) (*dto.RegisterResp, error) {
+	hashed, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return nil, fmt.Errorf("加密时出错：%w", err)
+	}
 	u := &models.User{
 		Username: req.Username,
-		Password: req.Password,
+		Password: string(hashed),
 	}
 
 	if err := s.repo.Create(u); err != nil {
