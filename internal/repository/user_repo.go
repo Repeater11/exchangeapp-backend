@@ -11,13 +11,14 @@ import (
 
 type UserRepository interface {
 	Create(*models.User) error
+	FindByUsername(username string) (*models.User, error)
 }
 
 type UserRepo struct {
 	db *gorm.DB
 }
 
-func NewUserRepository(db *gorm.DB) *UserRepo {
+func NewUserRepository(db *gorm.DB) UserRepository {
 	return &UserRepo{db: db}
 }
 
@@ -37,4 +38,15 @@ func (r *UserRepo) Create(user *models.User) error {
 		return fmt.Errorf("创建用户失败：%w", err)
 	}
 	return nil
+}
+
+func (r *UserRepo) FindByUsername(username string) (*models.User, error) {
+	var u models.User
+	if err := r.db.Where("username = ?", username).First(&u).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("查询用户失败：%w", err)
+	}
+	return &u, nil
 }

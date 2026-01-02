@@ -36,3 +36,21 @@ func (h *UserHandler) Register(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusCreated, resp)
 }
+
+func (h *UserHandler) Login(ctx *gin.Context) {
+	var req dto.LoginReq
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+		return
+	}
+	resp, err := h.svc.Login(req)
+	if err != nil {
+		if errors.Is(err, service.ErrInvalidCredentials) {
+			ctx.JSON(http.StatusUnauthorized, gin.H{"error": "用户名或密码错误"})
+			return
+		}
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "登录失败"})
+		return
+	}
+	ctx.JSON(http.StatusOK, resp)
+}

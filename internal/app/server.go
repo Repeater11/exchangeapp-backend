@@ -39,6 +39,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	userHandler := handler.NewUserHandler(userSvc)
 
 	e.POST("/register", userHandler.Register)
+	e.POST("/login", userHandler.Login)
 
 	e.GET("/healthz", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
