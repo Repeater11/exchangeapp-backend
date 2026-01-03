@@ -18,4 +18,5 @@ type LoginReq struct {
 type LoginResp struct {
 	Username string `json:"username"`
 	ID       uint   `json:"id"`
+	Token    string `json:"token"`
 }

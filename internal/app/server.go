@@ -35,7 +35,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	}
 
 	userRepo := repository.NewUserRepository(gormDB)
-	userSvc := service.NewUserService(userRepo)
+	userSvc := service.NewUserService(userRepo, cfg.JWT)
 	userHandler := handler.NewUserHandler(userSvc)
 
 	e.POST("/register", userHandler.Register)

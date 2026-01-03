@@ -2,22 +2,30 @@ package service
 
 import (
 	"errors"
+	"exchangeapp/internal/config"
 	"exchangeapp/internal/dto"
 	"exchangeapp/internal/models"
 	"exchangeapp/internal/repository"
+	"exchangeapp/pkg/jwt"
 	"fmt"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
-	repo repository.UserRepository
+	repo             repository.UserRepository
+	jwtSecret        string
+	jwtExpireMinutes uint
 }
 
 var ErrInvalidCredentials = errors.New("用户名或密码错误")
 
-func NewUserService(repo repository.UserRepository) *UserService {
-	return &UserService{repo: repo}
+func NewUserService(repo repository.UserRepository, jwtCfg config.JWTConfig) *UserService {
+	return &UserService{
+		repo:             repo,
+		jwtSecret:        jwtCfg.Secret,
+		jwtExpireMinutes: jwtCfg.ExpireMinutes,
+	}
 }
 
 func (s *UserService) Register(req dto.RegisterReq) (*dto.RegisterResp, error) {
@@ -51,8 +59,13 @@ func (s *UserService) Login(req dto.LoginReq) (*dto.LoginResp, error) {
 	if err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(req.Password)); err != nil {
 		return nil, ErrInvalidCredentials
 	}
+	token, err := jwt.GenerateToken(u.ID, u.Username, s.jwtSecret, s.jwtExpireMinutes)
+	if err != nil {
+		return nil, fmt.Errorf("生成 token 失败：%w", err)
+	}
 	return &dto.LoginResp{
 		Username: u.Username,
 		ID:       u.ID,
+		Token:    token,
 	}, nil
 }

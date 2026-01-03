@@ -12,6 +12,7 @@ import (
 type Config struct {
 	App      AppConfig
 	Database DatabaseConfig
+	JWT      JWTConfig
 }
 
 type AppConfig struct {
@@ -25,6 +26,11 @@ type DatabaseConfig struct {
 	User     string
 	Password string
 	Name     string
+}
+
+type JWTConfig struct {
+	Secret        string
+	ExpireMinutes uint
 }
 
 func NewConfig() (*Config, error) {

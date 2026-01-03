@@ -8,3 +8,7 @@ database:
   user: root
   password:
   name: currency_exchange_db
+
+jwt:
+  secret:
+  expire_minutes: 1440
