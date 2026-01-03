@@ -54,3 +54,16 @@ func (h *UserHandler) Login(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, resp)
 }
+
+func (h *UserHandler) Me(ctx *gin.Context) {
+	userID, ok := ctx.Get("userID")
+	if !ok {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+		return
+	}
+	username, _ := ctx.Get("username")
+	ctx.JSON(http.StatusOK, gin.H{
+		"id":       userID,
+		"username": username,
+	})
+}

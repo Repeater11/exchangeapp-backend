@@ -4,6 +4,7 @@ import (
 	"exchangeapp/internal/config"
 	"exchangeapp/internal/db"
 	"exchangeapp/internal/handler"
+	"exchangeapp/internal/middleware"
 	"exchangeapp/internal/models"
 	"exchangeapp/internal/repository"
 	"exchangeapp/internal/service"
@@ -40,6 +41,10 @@ func NewServer(cfg *config.Config) (*Server, error) {
 
 	e.POST("/register", userHandler.Register)
 	e.POST("/login", userHandler.Login)
+
+	authGroup := e.Group("/api")
+	authGroup.Use(middleware.Auth(cfg.JWT.Secret))
+	authGroup.GET("/me", userHandler.Me)
 
 	e.GET("/healthz", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
