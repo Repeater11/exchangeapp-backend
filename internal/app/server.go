@@ -39,12 +39,24 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	userSvc := service.NewUserService(userRepo, cfg.JWT)
 	userHandler := handler.NewUserHandler(userSvc)
 
+	threadRepo := repository.NewThreadRepository(gormDB)
+	threadSvc := service.NewThreadService(threadRepo)
+	threadHandler := handler.NewThreadHandler(threadSvc)
+
+	replyRepo := repository.NewReplyRepository(gormDB)
+	replySvc := service.NewReplyService(replyRepo, threadRepo)
+	replyHandler := handler.NewReplyHandler(replySvc)
+
 	e.POST("/register", userHandler.Register)
 	e.POST("/login", userHandler.Login)
+	e.GET("/threads", threadHandler.List)
+	e.GET("/threads/:id/replies", replyHandler.ListByThreadID)
 
 	authGroup := e.Group("/api")
 	authGroup.Use(middleware.Auth(cfg.JWT.Secret))
 	authGroup.GET("/me", userHandler.Me)
+	authGroup.POST("/threads", threadHandler.Create)
+	authGroup.POST("/threads/:id/replies", replyHandler.Create)
 
 	e.GET("/healthz", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
@@ -74,5 +86,5 @@ func (s *Server) Close() error {
 }
 
 func runMigrations(db *gorm.DB) error {
-	return db.AutoMigrate(&models.User{})
+	return db.AutoMigrate(&models.User{}, &models.Thread{}, &models.Reply{})
 }
