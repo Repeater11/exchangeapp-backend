@@ -4,6 +4,7 @@ import (
 	"exchangeapp/internal/dto"
 	"exchangeapp/internal/service"
 	"net/http"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -49,5 +50,27 @@ func (h *ThreadHandler) List(ctx *gin.Context) {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "获取帖子失败"})
 		return
 	}
+	ctx.JSON(http.StatusOK, resp)
+}
+
+func (h *ThreadHandler) Detail(ctx *gin.Context) {
+	idStr := ctx.Param("id")
+	id64, err := strconv.ParseUint(idStr, 10, 64)
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "帖子 ID 无效"})
+		return
+	}
+	threadID := uint(id64)
+
+	resp, err := h.svc.GetByID(threadID)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "获取帖子信息失败"})
+		return
+	}
+	if resp == nil {
+		ctx.JSON(http.StatusNotFound, gin.H{"error": "帖子不存在"})
+		return
+	}
+
 	ctx.JSON(http.StatusOK, resp)
 }

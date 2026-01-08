@@ -51,3 +51,21 @@ func (s *ThreadService) List() ([]dto.ThreadSummaryResp, error) {
 	}
 	return trs, nil
 }
+
+func (s *ThreadService) GetByID(id uint) (*dto.ThreadDetailResp, error) {
+	t, err := s.repo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if t == nil {
+		return nil, nil
+	}
+
+	return &dto.ThreadDetailResp{
+		ID:        t.ID,
+		Title:     t.Title,
+		Content:   t.Content,
+		UserID:    t.UserID,
+		CreatedAt: t.CreatedAt,
+	}, nil
+}
