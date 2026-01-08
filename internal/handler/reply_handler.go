@@ -61,12 +61,16 @@ func (h *ReplyHandler) ListByThreadID(ctx *gin.Context) {
 	idStr := ctx.Param("id")
 	id64, err := strconv.ParseUint(idStr, 10, 64)
 	if err != nil {
+		if errors.Is(err, service.ErrThreadNotFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "帖子不存在"})
+		}
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "帖子 ID 无效"})
 		return
 	}
 	threadID := uint(id64)
 
-	resp, err := h.svc.ListByThreadID(threadID)
+	page, size := parsePageSize(ctx.Query("page"), ctx.Query("size"))
+	resp, err := h.svc.ListByThreadID(threadID, page, size)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "获取回复失败"})
 		return

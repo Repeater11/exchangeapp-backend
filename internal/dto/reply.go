@@ -13,3 +13,10 @@ type ReplyResp struct {
 	UserID    uint      `json:"user_id"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+type ReplyListResp struct {
+	Items []ReplyResp `json:"items"`
+	Total int64       `json:"total"`
+	Page  int         `json:"page"`
+	Size  int         `json:"size"`
+}

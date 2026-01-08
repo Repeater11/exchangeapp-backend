@@ -21,3 +21,10 @@ type ThreadDetailResp struct {
 	UserID    uint      `json:"user_id"`
 	CreatedAt time.Time `json:"created_at"`
 }
+
+type ThreadListResp struct {
+	Items []ThreadSummaryResp `json:"items"`
+	Total int64               `json:"total"`
+	Page  int                 `json:"page"`
+	Size  int                 `json:"size"`
+}

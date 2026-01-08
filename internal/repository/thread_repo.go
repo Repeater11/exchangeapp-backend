@@ -10,8 +10,9 @@ import (
 
 type ThreadRepository interface {
 	Create(*models.Thread) error
-	List() ([]models.Thread, error)
+	List(limit, offset int) ([]models.Thread, error)
 	FindByID(id uint) (*models.Thread, error)
+	Count() (int64, error)
 }
 
 type ThreadRepo struct {
@@ -29,9 +30,11 @@ func (r *ThreadRepo) Create(t *models.Thread) error {
 	return nil
 }
 
-func (r *ThreadRepo) List() ([]models.Thread, error) {
+func (r *ThreadRepo) List(limit, offset int) ([]models.Thread, error) {
 	var threads []models.Thread
-	if err := r.db.Order("created_at desc").Find(&threads).Error; err != nil {
+	if err := r.db.Order("created_at desc").
+		Limit(limit).Offset(offset).
+		Find(&threads).Error; err != nil {
 		return nil, fmt.Errorf("查询帖子失败：%w", err)
 	}
 	return threads, nil
@@ -46,4 +49,13 @@ func (r *ThreadRepo) FindByID(id uint) (*models.Thread, error) {
 		return nil, fmt.Errorf("查询帖子失败：%w", err)
 	}
 	return &t, nil
+}
+
+func (r *ThreadRepo) Count() (int64, error) {
+	var total int64
+	if err := r.db.Model(&models.Thread{}).Count(&total).Error; err != nil {
+		return 0, fmt.Errorf("统计帖子失败：%w", err)
+	}
+
+	return total, nil
 }

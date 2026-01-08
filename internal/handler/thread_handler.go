@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"errors"
 	"exchangeapp/internal/dto"
 	"exchangeapp/internal/service"
 	"net/http"
@@ -45,7 +46,8 @@ func (h *ThreadHandler) Create(ctx *gin.Context) {
 }
 
 func (h *ThreadHandler) List(ctx *gin.Context) {
-	resp, err := h.svc.List()
+	page, size := parsePageSize(ctx.Query("page"), ctx.Query("size"))
+	resp, err := h.svc.List(page, size)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "获取帖子失败"})
 		return
@@ -64,11 +66,10 @@ func (h *ThreadHandler) Detail(ctx *gin.Context) {
 
 	resp, err := h.svc.GetByID(threadID)
 	if err != nil {
+		if errors.Is(err, service.ErrThreadNotFound) {
+			ctx.JSON(http.StatusNotFound, gin.H{"error": "帖子不存在"})
+		}
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "获取帖子信息失败"})
-		return
-	}
-	if resp == nil {
-		ctx.JSON(http.StatusNotFound, gin.H{"error": "帖子不存在"})
 		return
 	}
 

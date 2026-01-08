@@ -50,15 +50,29 @@ func (s *ReplyService) Create(userID uint, threadID uint, req dto.CreateReplyReq
 	}, nil
 }
 
-func (s *ReplyService) ListByThreadID(threadID uint) ([]dto.ReplyResp, error) {
-	rs, err := s.replyRepo.ListByThreadID(threadID)
+func (s *ReplyService) ListByThreadID(threadID uint, page, size int) (*dto.ReplyListResp, error) {
+	t, err := s.threadRepo.FindByID(threadID)
+	if err != nil {
+		return nil, err
+	}
+	if t == nil {
+		return nil, ErrThreadNotFound
+	}
+
+	offset := (page - 1) * size
+
+	total, err := s.replyRepo.CountByThreadID(threadID)
+	if err != nil {
+		return nil, err
+	}
+	rs, err := s.replyRepo.ListByThreadID(threadID, size, offset)
 	if err != nil {
 		return nil, err
 	}
 
-	rrs := make([]dto.ReplyResp, len(rs))
-	for i := range rrs {
-		rrs[i] = dto.ReplyResp{
+	items := make([]dto.ReplyResp, len(rs))
+	for i := range rs {
+		items[i] = dto.ReplyResp{
 			ID:        rs[i].ID,
 			ThreadID:  rs[i].ThreadID,
 			Content:   rs[i].Content,
@@ -66,5 +80,11 @@ func (s *ReplyService) ListByThreadID(threadID uint) ([]dto.ReplyResp, error) {
 			CreatedAt: rs[i].CreatedAt,
 		}
 	}
-	return rrs, nil
+
+	return &dto.ReplyListResp{
+		Items: items,
+		Total: total,
+		Page:  page,
+		Size:  size,
+	}, nil
 }

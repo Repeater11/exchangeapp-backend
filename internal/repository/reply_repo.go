@@ -9,7 +9,8 @@ import (
 
 type ReplyRepository interface {
 	Create(*models.Reply) error
-	ListByThreadID(threadID uint) ([]models.Reply, error)
+	ListByThreadID(threadID uint, limit, offset int) ([]models.Reply, error)
+	CountByThreadID(threadID uint) (int64, error)
 }
 
 type ReplyRepo struct {
@@ -27,12 +28,23 @@ func (r *ReplyRepo) Create(reply *models.Reply) error {
 	return nil
 }
 
-func (r *ReplyRepo) ListByThreadID(threadID uint) ([]models.Reply, error) {
+func (r *ReplyRepo) ListByThreadID(threadID uint, limit, offset int) ([]models.Reply, error) {
 	var replies []models.Reply
 	if err := r.db.Where("thread_id = ?", threadID).
 		Order("created_at asc").
+		Limit(limit).Offset(offset).
 		Find(&replies).Error; err != nil {
 		return nil, fmt.Errorf("查询回复失败：%w", err)
 	}
 	return replies, nil
+}
+
+func (r *ReplyRepo) CountByThreadID(threadID uint) (int64, error) {
+	var total int64
+	if err := r.db.Model(&models.Reply{}).
+		Where("thread_id = ?", threadID).
+		Count(&total).Error; err != nil {
+		return 0, fmt.Errorf("统计回复失败：%w", err)
+	}
+	return total, nil
 }

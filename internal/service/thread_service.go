@@ -34,22 +34,34 @@ func (s *ThreadService) Create(userID uint, req dto.CreateThreadReq) (*dto.Threa
 	}, nil
 }
 
-func (s *ThreadService) List() ([]dto.ThreadSummaryResp, error) {
-	ts, err := s.repo.List()
+func (s *ThreadService) List(page, size int) (*dto.ThreadListResp, error) {
+	offset := (page - 1) * size
+
+	total, err := s.repo.Count()
+	if err != nil {
+		return nil, err
+	}
+	ts, err := s.repo.List(size, offset)
 	if err != nil {
 		return nil, err
 	}
 
-	trs := make([]dto.ThreadSummaryResp, len(ts))
+	items := make([]dto.ThreadSummaryResp, len(ts))
 	for i := range ts {
-		trs[i] = dto.ThreadSummaryResp{
+		items[i] = dto.ThreadSummaryResp{
 			ID:        ts[i].ID,
 			Title:     ts[i].Title,
 			UserID:    ts[i].UserID,
 			CreatedAt: ts[i].CreatedAt,
 		}
 	}
-	return trs, nil
+
+	return &dto.ThreadListResp{
+		Items: items,
+		Total: total,
+		Page:  page,
+		Size:  size,
+	}, nil
 }
 
 func (s *ThreadService) GetByID(id uint) (*dto.ThreadDetailResp, error) {
