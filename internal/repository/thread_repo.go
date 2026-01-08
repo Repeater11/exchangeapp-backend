@@ -13,6 +13,8 @@ type ThreadRepository interface {
 	List(limit, offset int) ([]models.Thread, error)
 	FindByID(id uint) (*models.Thread, error)
 	Count() (int64, error)
+	Update(*models.Thread) error
+	DeleteByID(id uint) error
 }
 
 type ThreadRepo struct {
@@ -58,4 +60,23 @@ func (r *ThreadRepo) Count() (int64, error) {
 	}
 
 	return total, nil
+}
+
+func (r *ThreadRepo) Update(t *models.Thread) error {
+	if err := r.db.Model(&models.Thread{}).
+		Where("id = ?", t.ID).
+		Updates(map[string]interface{}{
+			"title":   t.Title,
+			"content": t.Content,
+		}).Error; err != nil {
+		return fmt.Errorf("更新帖子失败：%w", err)
+	}
+	return nil
+}
+
+func (r *ThreadRepo) DeleteByID(id uint) error {
+	if err := r.db.Delete(&models.Thread{}, id).Error; err != nil {
+		return fmt.Errorf("删除帖子失败：%w", err)
+	}
+	return nil
 }

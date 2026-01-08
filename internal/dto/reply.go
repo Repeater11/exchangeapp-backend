@@ -20,3 +20,7 @@ type ReplyListResp struct {
 	Page  int         `json:"page"`
 	Size  int         `json:"size"`
 }
+
+type UpdateReplyReq struct {
+	Content string `json:"content" binding:"required,min=1,max=4000"`
+}

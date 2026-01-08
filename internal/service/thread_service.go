@@ -70,7 +70,7 @@ func (s *ThreadService) GetByID(id uint) (*dto.ThreadDetailResp, error) {
 		return nil, err
 	}
 	if t == nil {
-		return nil, nil
+		return nil, ErrThreadNotFound
 	}
 
 	return &dto.ThreadDetailResp{
@@ -80,4 +80,46 @@ func (s *ThreadService) GetByID(id uint) (*dto.ThreadDetailResp, error) {
 		UserID:    t.UserID,
 		CreatedAt: t.CreatedAt,
 	}, nil
+}
+
+func (s *ThreadService) Update(userID, id uint, req dto.UpdateThreadReq) (*dto.ThreadDetailResp, error) {
+	t, err := s.repo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if t == nil {
+		return nil, ErrThreadNotFound
+	}
+	if t.UserID != userID {
+		return nil, ErrForbidden
+	}
+
+	t.Title = req.Title
+	t.Content = req.Content
+
+	if err := s.repo.Update(t); err != nil {
+		return nil, err
+	}
+	return &dto.ThreadDetailResp{
+		ID:        t.ID,
+		Title:     t.Title,
+		Content:   t.Content,
+		UserID:    t.UserID,
+		CreatedAt: t.CreatedAt,
+	}, nil
+}
+
+func (s *ThreadService) Delete(userID, id uint) error {
+	t, err := s.repo.FindByID(id)
+	if err != nil {
+		return err
+	}
+	if t == nil {
+		return ErrThreadNotFound
+	}
+	if t.UserID != userID {
+		return ErrForbidden
+	}
+
+	return s.repo.DeleteByID(id)
 }

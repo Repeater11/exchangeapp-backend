@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"errors"
 	"exchangeapp/internal/models"
 	"fmt"
 
@@ -11,6 +12,9 @@ type ReplyRepository interface {
 	Create(*models.Reply) error
 	ListByThreadID(threadID uint, limit, offset int) ([]models.Reply, error)
 	CountByThreadID(threadID uint) (int64, error)
+	FindByID(id uint) (*models.Reply, error)
+	Update(*models.Reply) error
+	DeleteByID(id uint) error
 }
 
 type ReplyRepo struct {
@@ -47,4 +51,33 @@ func (r *ReplyRepo) CountByThreadID(threadID uint) (int64, error) {
 		return 0, fmt.Errorf("统计回复失败：%w", err)
 	}
 	return total, nil
+}
+
+func (r *ReplyRepo) FindByID(id uint) (*models.Reply, error) {
+	var rp models.Reply
+	if err := r.db.First(&rp, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, fmt.Errorf("查询评论失败：%w", err)
+	}
+	return &rp, nil
+}
+
+func (r *ReplyRepo) Update(rp *models.Reply) error {
+	if err := r.db.Model(&models.Reply{}).
+		Where("id = ?", rp.ID).
+		Updates(map[string]interface{}{
+			"content": rp.Content,
+		}).Error; err != nil {
+		return fmt.Errorf("更新评论失败：%w", err)
+	}
+	return nil
+}
+
+func (r *ReplyRepo) DeleteByID(id uint) error {
+	if err := r.db.Delete(&models.Reply{}, id).Error; err != nil {
+		return fmt.Errorf("删除评论失败：%w", err)
+	}
+	return nil
 }

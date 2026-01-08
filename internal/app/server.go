@@ -58,6 +58,10 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	authGroup.GET("/me", userHandler.Me)
 	authGroup.POST("/threads", threadHandler.Create)
 	authGroup.POST("/threads/:id/replies", replyHandler.Create)
+	authGroup.PUT("/threads/:id", threadHandler.Update)
+	authGroup.DELETE("/threads/:id", threadHandler.Delete)
+	authGroup.PUT("/replies/:id", replyHandler.Update)
+	authGroup.DELETE("/replies/:id", replyHandler.Delete)
 
 	e.GET("/healthz", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{

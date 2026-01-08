@@ -1,13 +1,10 @@
 package service
 
 import (
-	"errors"
 	"exchangeapp/internal/dto"
 	"exchangeapp/internal/models"
 	"exchangeapp/internal/repository"
 )
-
-var ErrThreadNotFound = errors.New("帖子不存在")
 
 type ReplyService struct {
 	replyRepo  repository.ReplyRepository
@@ -87,4 +84,45 @@ func (s *ReplyService) ListByThreadID(threadID uint, page, size int) (*dto.Reply
 		Page:  page,
 		Size:  size,
 	}, nil
+}
+
+func (s *ReplyService) Update(userID, id uint, req dto.UpdateReplyReq) (*dto.ReplyResp, error) {
+	r, err := s.replyRepo.FindByID(id)
+	if err != nil {
+		return nil, err
+	}
+	if r == nil {
+		return nil, ErrReplyNotFound
+	}
+	if r.UserID != userID {
+		return nil, ErrForbidden
+	}
+
+	r.Content = req.Content
+
+	if err := s.replyRepo.Update(r); err != nil {
+		return nil, err
+	}
+	return &dto.ReplyResp{
+		ID:        r.ID,
+		ThreadID:  r.ThreadID,
+		Content:   r.Content,
+		UserID:    r.UserID,
+		CreatedAt: r.CreatedAt,
+	}, nil
+}
+
+func (s *ReplyService) Delete(userID, id uint) error {
+	r, err := s.replyRepo.FindByID(id)
+	if err != nil {
+		return err
+	}
+	if r == nil {
+		return ErrReplyNotFound
+	}
+	if r.UserID != userID {
+		return ErrForbidden
+	}
+
+	return s.replyRepo.DeleteByID(id)
 }
