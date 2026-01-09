@@ -1,6 +1,8 @@
 package app
 
 import (
+	"context"
+	"errors"
 	"exchangeapp/internal/config"
 	"exchangeapp/internal/db"
 	"exchangeapp/internal/handler"
@@ -10,14 +12,16 @@ import (
 	"exchangeapp/internal/service"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 type Server struct {
-	e  *gin.Engine
-	db *gorm.DB
+	e       *gin.Engine
+	db      *gorm.DB
+	httpSrv *http.Server
 }
 
 func NewServer(cfg *config.Config) (*Server, error) {
@@ -69,11 +73,39 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		})
 	})
 
-	return &Server{e: e, db: gormDB}, nil
+	httpSrv := &http.Server{
+		Addr:         fmt.Sprintf(":%d", cfg.App.Port),
+		Handler:      e,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+		IdleTimeout:  60 * time.Second,
+	}
+
+	return &Server{
+		e:       e,
+		db:      gormDB,
+		httpSrv: httpSrv,
+	}, nil
 }
 
-func (s *Server) Run(addr int) error {
-	return s.e.Run(fmt.Sprintf(":%d", addr))
+func (s *Server) Run() error {
+	return s.httpSrv.ListenAndServe()
+}
+
+func (s *Server) Shutdown(ctx context.Context) error {
+	var httpErr error
+	if s.httpSrv != nil {
+		if err := s.httpSrv.Shutdown(ctx); err != nil {
+			httpErr = fmt.Errorf("关闭 HTTP 服务失败：%w", err)
+		}
+	}
+
+	dbErr := s.Close()
+	if dbErr != nil {
+		dbErr = fmt.Errorf("关闭数据库失败：%w", dbErr)
+	}
+
+	return errors.Join(httpErr, dbErr)
 }
 
 func (s *Server) Close() error {

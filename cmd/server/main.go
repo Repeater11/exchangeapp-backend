@@ -1,9 +1,16 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"exchangeapp/internal/app"
 	"exchangeapp/internal/config"
 	"log"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 )
 
 func main() {
@@ -16,13 +23,20 @@ func main() {
 	if err != nil {
 		log.Fatalf("新建服务失败：%v", err)
 	}
-	defer func() {
-		if err := s.Close(); err != nil {
-			log.Printf("关闭资源失败：%v", err)
+
+	go func() {
+		if err := s.Run(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("服务启动失败：%v", err)
 		}
 	}()
 
-	if err := s.Run(cfg.App.Port); err != nil {
-		log.Fatalf("服务启动失败：%v", err)
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	<-ctx.Done()
+	stop()
+
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	if err := s.Shutdown(shutdownCtx); err != nil {
+		log.Printf("服务关闭失败：%v", err)
 	}
 }
