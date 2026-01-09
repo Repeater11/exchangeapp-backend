@@ -60,6 +60,8 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	authGroup := e.Group("/api")
 	authGroup.Use(middleware.Auth(cfg.JWT.Secret))
 	authGroup.GET("/me", userHandler.Me)
+	authGroup.GET("/me/threads", threadHandler.ListMine)
+	authGroup.GET("/me/replies", replyHandler.ListMine)
 	authGroup.POST("/threads", threadHandler.Create)
 	authGroup.POST("/threads/:id/replies", replyHandler.Create)
 	authGroup.PUT("/threads/:id", threadHandler.Update)

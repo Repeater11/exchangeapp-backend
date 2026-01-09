@@ -64,6 +64,36 @@ func (s *ThreadService) List(page, size int) (*dto.ThreadListResp, error) {
 	}, nil
 }
 
+func (s *ThreadService) ListByUserID(userID uint, page, size int) (*dto.ThreadListResp, error) {
+	offset := (page - 1) * size
+
+	total, err := s.repo.CountByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+	ts, err := s.repo.ListByUserID(userID, size, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]dto.ThreadSummaryResp, len(ts))
+	for i := range ts {
+		items[i] = dto.ThreadSummaryResp{
+			ID:        ts[i].ID,
+			Title:     ts[i].Title,
+			UserID:    ts[i].UserID,
+			CreatedAt: ts[i].CreatedAt,
+		}
+	}
+
+	return &dto.ThreadListResp{
+		Items: items,
+		Total: total,
+		Page:  page,
+		Size:  size,
+	}, nil
+}
+
 func (s *ThreadService) GetByID(id uint) (*dto.ThreadDetailResp, error) {
 	t, err := s.repo.FindByID(id)
 	if err != nil {

@@ -38,6 +38,14 @@ func (f *fakeThreadRepo) Count() (int64, error) {
 	return f.countResult, f.countErr
 }
 
+func (f *fakeThreadRepo) ListByUserID(userID uint, limit, offset int) ([]models.Thread, error) {
+	return f.listResult, f.listErr
+}
+
+func (f *fakeThreadRepo) CountByUserID(userID uint) (int64, error) {
+	return f.countResult, f.countErr
+}
+
 func (f *fakeThreadRepo) FindByID(id uint) (*models.Thread, error) {
 	return f.findResult, f.findErr
 }
@@ -85,6 +93,14 @@ func (f *fakeReplyRepo) ListByThreadID(threadID uint, limit, offset int) ([]mode
 }
 
 func (f *fakeReplyRepo) CountByThreadID(threadID uint) (int64, error) {
+	return f.countResult, f.countErr
+}
+
+func (f *fakeReplyRepo) ListByUserID(userID uint, limit, offset int) ([]models.Reply, error) {
+	return f.listResult, f.listErr
+}
+
+func (f *fakeReplyRepo) CountByUserID(userID uint) (int64, error) {
 	return f.countResult, f.countErr
 }
 

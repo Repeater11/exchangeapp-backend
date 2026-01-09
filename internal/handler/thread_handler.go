@@ -47,6 +47,21 @@ func (h *ThreadHandler) List(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+func (h *ThreadHandler) ListMine(ctx *gin.Context) {
+	userID, ok := getUserID(ctx)
+	if !ok {
+		return
+	}
+
+	page, size := parsePageSize(ctx.Query("page"), ctx.Query("size"))
+	resp, err := h.svc.ListByUserID(userID, page, size)
+	if err != nil {
+		jsonError(ctx, http.StatusInternalServerError, "获取帖子失败")
+		return
+	}
+	ctx.JSON(http.StatusOK, resp)
+}
+
 func (h *ThreadHandler) Detail(ctx *gin.Context) {
 	threadID, ok := parseUintParam(ctx, "id", "帖子 ID 无效")
 	if !ok {

@@ -12,6 +12,8 @@ type ReplyRepository interface {
 	Create(*models.Reply) error
 	ListByThreadID(threadID uint, limit, offset int) ([]models.Reply, error)
 	CountByThreadID(threadID uint) (int64, error)
+	ListByUserID(userID uint, limit, offset int) ([]models.Reply, error)
+	CountByUserID(userID uint) (int64, error)
 	FindByID(id uint) (*models.Reply, error)
 	Update(*models.Reply) error
 	DeleteByID(id uint) error
@@ -47,6 +49,27 @@ func (r *ReplyRepo) CountByThreadID(threadID uint) (int64, error) {
 	var total int64
 	if err := r.db.Model(&models.Reply{}).
 		Where("thread_id = ?", threadID).
+		Count(&total).Error; err != nil {
+		return 0, fmt.Errorf("统计回复失败：%w", err)
+	}
+	return total, nil
+}
+
+func (r *ReplyRepo) ListByUserID(userID uint, limit, offset int) ([]models.Reply, error) {
+	var replies []models.Reply
+	if err := r.db.Where("user_id = ?", userID).
+		Order("created_at desc").
+		Limit(limit).Offset(offset).
+		Find(&replies).Error; err != nil {
+		return nil, fmt.Errorf("查询回复失败：%w", err)
+	}
+	return replies, nil
+}
+
+func (r *ReplyRepo) CountByUserID(userID uint) (int64, error) {
+	var total int64
+	if err := r.db.Model(&models.Reply{}).
+		Where("user_id = ?", userID).
 		Count(&total).Error; err != nil {
 		return 0, fmt.Errorf("统计回复失败：%w", err)
 	}

@@ -7,6 +7,11 @@ import (
 )
 
 type fakeThreadRepo struct {
+	listResult  []models.Thread
+	listErr     error
+	countResult int64
+	countErr    error
+
 	findResult *models.Thread
 	findErr    error
 
@@ -22,11 +27,19 @@ func (f *fakeThreadRepo) Create(*models.Thread) error {
 }
 
 func (f *fakeThreadRepo) List(int, int) ([]models.Thread, error) {
-	return nil, nil
+	return f.listResult, f.listErr
 }
 
 func (f *fakeThreadRepo) Count() (int64, error) {
-	return 0, nil
+	return f.countResult, f.countErr
+}
+
+func (f *fakeThreadRepo) ListByUserID(userID uint, limit, offset int) ([]models.Thread, error) {
+	return f.listResult, f.listErr
+}
+
+func (f *fakeThreadRepo) CountByUserID(userID uint) (int64, error) {
+	return f.countResult, f.countErr
 }
 
 func (f *fakeThreadRepo) FindByID(uint) (*models.Thread, error) {

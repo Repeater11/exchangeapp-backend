@@ -66,6 +66,21 @@ func (h *ReplyHandler) ListByThreadID(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, resp)
 }
 
+func (h *ReplyHandler) ListMine(ctx *gin.Context) {
+	userID, ok := getUserID(ctx)
+	if !ok {
+		return
+	}
+
+	page, size := parsePageSize(ctx.Query("page"), ctx.Query("size"))
+	resp, err := h.svc.ListByUserID(userID, page, size)
+	if err != nil {
+		jsonError(ctx, http.StatusInternalServerError, "获取回复失败")
+		return
+	}
+	ctx.JSON(http.StatusOK, resp)
+}
+
 func (h *ReplyHandler) Update(ctx *gin.Context) {
 	var req dto.UpdateReplyReq
 	if !bindJSON(ctx, &req) {

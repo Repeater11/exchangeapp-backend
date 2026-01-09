@@ -13,6 +13,8 @@ type ThreadRepository interface {
 	List(limit, offset int) ([]models.Thread, error)
 	FindByID(id uint) (*models.Thread, error)
 	Count() (int64, error)
+	ListByUserID(userID uint, limit, offset int) ([]models.Thread, error)
+	CountByUserID(userID uint) (int64, error)
 	Update(*models.Thread) error
 	DeleteByID(id uint) error
 }
@@ -59,6 +61,27 @@ func (r *ThreadRepo) Count() (int64, error) {
 		return 0, fmt.Errorf("统计帖子失败：%w", err)
 	}
 
+	return total, nil
+}
+
+func (r *ThreadRepo) ListByUserID(userID uint, limit, offset int) ([]models.Thread, error) {
+	var threads []models.Thread
+	if err := r.db.Where("user_id = ?", userID).
+		Order("created_at desc").
+		Limit(limit).Offset(offset).
+		Find(&threads).Error; err != nil {
+		return nil, fmt.Errorf("查询帖子失败：%w", err)
+	}
+	return threads, nil
+}
+
+func (r *ThreadRepo) CountByUserID(userID uint) (int64, error) {
+	var total int64
+	if err := r.db.Model(&models.Thread{}).
+		Where("user_id = ?", userID).
+		Count(&total).Error; err != nil {
+		return 0, fmt.Errorf("统计帖子失败：%w", err)
+	}
 	return total, nil
 }
 

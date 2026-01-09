@@ -86,6 +86,37 @@ func (s *ReplyService) ListByThreadID(threadID uint, page, size int) (*dto.Reply
 	}, nil
 }
 
+func (s *ReplyService) ListByUserID(userID uint, page, size int) (*dto.ReplyListResp, error) {
+	offset := (page - 1) * size
+
+	total, err := s.replyRepo.CountByUserID(userID)
+	if err != nil {
+		return nil, err
+	}
+	rs, err := s.replyRepo.ListByUserID(userID, size, offset)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]dto.ReplyResp, len(rs))
+	for i := range rs {
+		items[i] = dto.ReplyResp{
+			ID:        rs[i].ID,
+			ThreadID:  rs[i].ThreadID,
+			Content:   rs[i].Content,
+			UserID:    rs[i].UserID,
+			CreatedAt: rs[i].CreatedAt,
+		}
+	}
+
+	return &dto.ReplyListResp{
+		Items: items,
+		Total: total,
+		Page:  page,
+		Size:  size,
+	}, nil
+}
+
 func (s *ReplyService) Update(userID, id uint, req dto.UpdateReplyReq) (*dto.ReplyResp, error) {
 	r, err := s.replyRepo.FindByID(id)
 	if err != nil {
