@@ -27,6 +27,7 @@ func newThreadRouter(repo repository.ThreadRepository, userID uint) *gin.Engine 
 
 	auth := r.Group("/api")
 	auth.Use(testAuthMiddleware(userID))
+	auth.GET("/me/threads", h.ListMine)
 	auth.POST("/threads", h.Create)
 	auth.PUT("/threads/:id", h.Update)
 	auth.DELETE("/threads/:id", h.Delete)
@@ -141,6 +142,45 @@ func TestThreadCreateOK(t *testing.T) {
 		t.Fatalf("unmarshal failed: %v", err)
 	}
 	if resp.UserID != 1 || resp.Title != "t" || resp.Content != "c" {
+		t.Fatalf("unexpected response: %+v", resp)
+	}
+}
+
+func TestThreadListMineUnauthorized(t *testing.T) {
+	repo := &fakeThreadRepo{}
+	r := newThreadRouter(repo, 0)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/me/threads", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected %d, got %d, body=%s", http.StatusUnauthorized, w.Code, w.Body.String())
+	}
+}
+
+func TestThreadListMineOK(t *testing.T) {
+	repo := &fakeThreadRepo{
+		listResult: []models.Thread{
+			{Model: gorm.Model{ID: 1}, Title: "t1", UserID: 1},
+		},
+		countResult: 1,
+	}
+	r := newThreadRouter(repo, 1)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/me/threads?page=1&size=10", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected %d, got %d, body=%s", http.StatusOK, w.Code, w.Body.String())
+	}
+
+	var resp dto.ThreadListResp
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal failed: %v", err)
+	}
+	if resp.Total != 1 || len(resp.Items) != 1 {
 		t.Fatalf("unexpected response: %+v", resp)
 	}
 }

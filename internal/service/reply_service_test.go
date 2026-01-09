@@ -35,6 +35,14 @@ func (f *fakeReplyRepo) CountByThreadID(threadID uint) (int64, error) {
 	return f.countResult, f.countErr
 }
 
+func (f *fakeReplyRepo) ListByUserID(userID uint, limit, offset int) ([]models.Reply, error) {
+	return f.listResult, f.listErr
+}
+
+func (f *fakeReplyRepo) CountByUserID(userID uint) (int64, error) {
+	return f.countResult, f.countErr
+}
+
 func (f *fakeReplyRepo) FindByID(id uint) (*models.Reply, error) {
 	return f.findResult, f.findErr
 }
@@ -106,5 +114,21 @@ func TestReplyServiceDelete(t *testing.T) {
 
 	if err := svc.Delete(1, 1); err != nil {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestReplyServiceListByUserID(t *testing.T) {
+	repo := &fakeReplyRepo{
+		listResult:  []models.Reply{*reply(1, 1, 1)},
+		countResult: 1,
+	}
+	svc := NewReplyService(repo, &fakeThreadRepo{})
+
+	resp, err := svc.ListByUserID(1, 1, 10)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Total != 1 || len(resp.Items) != 1 {
+		t.Fatalf("unexpected result: %+v", resp)
 	}
 }

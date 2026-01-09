@@ -44,3 +44,19 @@ func TestThreadServiceDelete(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 }
+
+func TestThreadServiceListByUserID(t *testing.T) {
+	repo := &fakeThreadRepo{
+		listResult:  []models.Thread{*thread(1, 1)},
+		countResult: 1,
+	}
+	svc := NewThreadService(repo)
+
+	resp, err := svc.ListByUserID(1, 1, 10)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if resp.Total != 1 || len(resp.Items) != 1 {
+		t.Fatalf("unexpected result: %+v", resp)
+	}
+}

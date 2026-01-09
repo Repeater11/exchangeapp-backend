@@ -26,6 +26,7 @@ func newReplyRouter(replyRepo repository.ReplyRepository, threadRepo repository.
 
 	auth := r.Group("/api")
 	auth.Use(testAuthMiddleware(userID))
+	auth.GET("/me/replies", h.ListMine)
 	auth.POST("/threads/:id/replies", h.Create)
 	auth.PUT("/replies/:id", h.Update)
 	auth.DELETE("/replies/:id", h.Delete)
@@ -181,6 +182,47 @@ func TestReplyCreateOK(t *testing.T) {
 		t.Fatalf("unmarshal failed: %v", err)
 	}
 	if resp.UserID != 1 || resp.ThreadID != 1 || resp.Content != "hello" {
+		t.Fatalf("unexpected response: %+v", resp)
+	}
+}
+
+func TestReplyListMineUnauthorized(t *testing.T) {
+	replyRepo := &fakeReplyRepo{}
+	threadRepo := &fakeThreadRepo{}
+	r := newReplyRouter(replyRepo, threadRepo, 0)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/me/replies", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected %d, got %d, body=%s", http.StatusUnauthorized, w.Code, w.Body.String())
+	}
+}
+
+func TestReplyListMineOK(t *testing.T) {
+	replyRepo := &fakeReplyRepo{
+		listResult: []models.Reply{
+			{Model: gorm.Model{ID: 1}, ThreadID: 1, UserID: 1, Content: "c"},
+		},
+		countResult: 1,
+	}
+	threadRepo := &fakeThreadRepo{}
+	r := newReplyRouter(replyRepo, threadRepo, 1)
+
+	req := httptest.NewRequest(http.MethodGet, "/api/me/replies?page=1&size=10", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected %d, got %d, body=%s", http.StatusOK, w.Code, w.Body.String())
+	}
+
+	var resp dto.ReplyListResp
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal failed: %v", err)
+	}
+	if resp.Total != 1 || len(resp.Items) != 1 {
 		t.Fatalf("unexpected response: %+v", resp)
 	}
 }
