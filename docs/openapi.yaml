@@ -488,6 +488,49 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResp"
+    get:
+      tags: [threads]
+      summary: 查询点赞状态
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LikeStatusResp"
+        "400":
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResp"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResp"
+        "404":
+          description: Not Found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResp"
+        "500":
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResp"
     delete:
       tags: [threads]
       summary: 取消点赞
@@ -877,3 +920,8 @@ components:
       properties:
         message:
           type: string
+    LikeStatusResp:
+      type: object
+      properties:
+        liked:
+          type: boolean

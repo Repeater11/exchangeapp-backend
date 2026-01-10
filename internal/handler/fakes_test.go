@@ -121,6 +121,8 @@ func (f *fakeReplyRepo) DeleteByID(id uint) error {
 type fakeThreadLikeRepo struct {
 	createErr error
 	deleteErr error
+	existsErr error
+	exists    bool
 
 	created *models.ThreadLike
 	deleted bool
@@ -137,7 +139,7 @@ func (f *fakeThreadLikeRepo) Delete(userID, threadID uint) error {
 }
 
 func (f *fakeThreadLikeRepo) Exists(userID, threadID uint) (bool, error) {
-	return false, nil
+	return f.exists, f.existsErr
 }
 
 func (f *fakeThreadLikeRepo) CountByThreadID(threadID uint) (int64, error) {
