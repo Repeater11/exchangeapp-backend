@@ -60,6 +60,10 @@ func (f *fakeThreadRepo) DeleteByID(id uint) error {
 	return f.deleteErr
 }
 
+func (f *fakeThreadRepo) IncrementLikeCount(threadID uint, delta int) error {
+	return nil
+}
+
 type fakeReplyRepo struct {
 	createErr error
 	listErr   error
