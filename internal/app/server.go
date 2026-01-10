@@ -73,6 +73,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	authGroup.DELETE("/replies/:id", replyHandler.Delete)
 	authGroup.POST("/threads/:id/like", threadLikeHandler.Like)
 	authGroup.DELETE("/threads/:id/like", threadLikeHandler.Unlike)
+	authGroup.GET("/threads/:id/like", threadLikeHandler.Status)
 
 	e.GET("/healthz", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{

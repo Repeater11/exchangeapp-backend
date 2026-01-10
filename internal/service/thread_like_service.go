@@ -50,3 +50,14 @@ func (s *ThreadLikeService) Unlike(userID, threadID uint) error {
 	}
 	return nil
 }
+
+func (s *ThreadLikeService) IsLiked(userID, threadID uint) (bool, error) {
+	t, err := s.threadRepo.FindByID(threadID)
+	if err != nil {
+		return false, err
+	}
+	if t == nil {
+		return false, ErrThreadNotFound
+	}
+	return s.likeRepo.Exists(userID, threadID)
+}

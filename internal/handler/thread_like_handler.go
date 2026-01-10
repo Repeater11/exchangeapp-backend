@@ -68,3 +68,26 @@ func (h *ThreadLikeHandler) Unlike(ctx *gin.Context) {
 	}
 	ctx.JSON(http.StatusOK, gin.H{"message": "取消点赞帖子成功"})
 }
+
+func (h *ThreadLikeHandler) Status(ctx *gin.Context) {
+	userID, ok := getUserID(ctx)
+	if !ok {
+		return
+	}
+
+	threadID, ok := parseUintParam(ctx, "id", "帖子 ID 无效")
+	if !ok {
+		return
+	}
+
+	liked, err := h.svc.IsLiked(userID, threadID)
+	if err != nil {
+		if errors.Is(err, service.ErrThreadNotFound) {
+			jsonError(ctx, http.StatusNotFound, "帖子不存在")
+			return
+		}
+		jsonError(ctx, http.StatusInternalServerError, "获取点赞状态失败")
+		return
+	}
+	ctx.JSON(http.StatusOK, gin.H{"liked": liked})
+}
