@@ -78,6 +78,10 @@ func (f *fakeThreadLikeRepo) Exists(userID, threadID uint) (bool, error) {
 	return false, nil
 }
 
+func (f *fakeThreadLikeRepo) CountByThreadID(threadID uint) (int64, error) {
+	return 0, nil
+}
+
 func gormModel(id uint) gorm.Model {
 	return gorm.Model{
 		ID: id,

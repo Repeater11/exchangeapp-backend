@@ -800,6 +800,9 @@ components:
         user_id:
           type: integer
           format: int64
+        like_count:
+          type: integer
+          format: int64
         created_at:
           type: string
           format: date-time

@@ -18,7 +18,7 @@ import (
 
 func newThreadRouter(repo repository.ThreadRepository, userID uint) *gin.Engine {
 	gin.SetMode(gin.TestMode)
-	svc := service.NewThreadService(repo)
+	svc := service.NewThreadService(repo, &fakeThreadLikeRepo{})
 	h := NewThreadHandler(svc)
 
 	r := gin.New()
