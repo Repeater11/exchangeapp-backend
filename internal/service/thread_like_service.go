@@ -33,6 +33,9 @@ func (s *ThreadLikeService) Like(userID, threadID uint) error {
 	if err := s.likeRepo.Create(tl); err != nil {
 		return err
 	}
+	if err := s.threadRepo.IncrementLikeCount(threadID, 1); err != nil {
+		return err
+	}
 	return nil
 }
 
@@ -46,6 +49,9 @@ func (s *ThreadLikeService) Unlike(userID, threadID uint) error {
 	}
 
 	if err := s.likeRepo.Delete(userID, threadID); err != nil {
+		return err
+	}
+	if err := s.threadRepo.IncrementLikeCount(threadID, -1); err != nil {
 		return err
 	}
 	return nil

@@ -17,6 +17,7 @@ type ThreadRepository interface {
 	CountByUserID(userID uint) (int64, error)
 	Update(*models.Thread) error
 	DeleteByID(id uint) error
+	IncrementLikeCount(thread uint, delta int) error
 }
 
 type ThreadRepo struct {
@@ -100,6 +101,15 @@ func (r *ThreadRepo) Update(t *models.Thread) error {
 func (r *ThreadRepo) DeleteByID(id uint) error {
 	if err := r.db.Delete(&models.Thread{}, id).Error; err != nil {
 		return fmt.Errorf("删除帖子失败：%w", err)
+	}
+	return nil
+}
+
+func (r *ThreadRepo) IncrementLikeCount(threadID uint, delta int) error {
+	if err := r.db.Model(&models.Thread{}).
+		Where("id = ?", threadID).
+		UpdateColumn("like_count", gorm.Expr("like_count + ?", delta)).Error; err != nil {
+		return fmt.Errorf("更新点赞数失败：%w", err)
 	}
 	return nil
 }

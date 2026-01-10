@@ -104,17 +104,12 @@ func (s *ThreadService) GetByID(id uint) (*dto.ThreadDetailResp, error) {
 		return nil, ErrThreadNotFound
 	}
 
-	likeCount, err := s.likeRepo.CountByThreadID(id)
-	if err != nil {
-		return nil, err
-	}
-
 	return &dto.ThreadDetailResp{
 		ID:        t.ID,
 		Title:     t.Title,
 		Content:   t.Content,
 		UserID:    t.UserID,
-		LikeCount: likeCount,
+		LikeCount: t.LikeCount,
 		CreatedAt: t.CreatedAt,
 	}, nil
 }
