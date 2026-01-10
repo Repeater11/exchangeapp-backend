@@ -51,6 +51,10 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	replySvc := service.NewReplyService(replyRepo, threadRepo)
 	replyHandler := handler.NewReplyHandler(replySvc)
 
+	threadLikeRepo := repository.NewThreadLikeRepository(gormDB)
+	threadLikeSvc := service.NewThreadLikeService(threadRepo, threadLikeRepo)
+	threadLikeHandler := handler.NewThreadLikeHandler(threadLikeSvc)
+
 	e.POST("/register", userHandler.Register)
 	e.POST("/login", userHandler.Login)
 	e.GET("/threads", threadHandler.List)
@@ -68,6 +72,8 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	authGroup.DELETE("/threads/:id", threadHandler.Delete)
 	authGroup.PUT("/replies/:id", replyHandler.Update)
 	authGroup.DELETE("/replies/:id", replyHandler.Delete)
+	authGroup.POST("/threads/:id/like", threadLikeHandler.Like)
+	authGroup.DELETE("/threads/:id/like", threadLikeHandler.Unlike)
 
 	e.GET("/healthz", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
@@ -125,5 +131,5 @@ func (s *Server) Close() error {
 }
 
 func runMigrations(db *gorm.DB) error {
-	return db.AutoMigrate(&models.User{}, &models.Thread{}, &models.Reply{})
+	return db.AutoMigrate(&models.User{}, &models.Thread{}, &models.Reply{}, &models.ThreadLike{})
 }
