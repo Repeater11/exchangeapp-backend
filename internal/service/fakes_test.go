@@ -56,6 +56,28 @@ func (f *fakeThreadRepo) DeleteByID(id uint) error {
 	return f.deleteErr
 }
 
+type fakeThreadLikeRepo struct {
+	createErr error
+	deleteErr error
+
+	created *models.ThreadLike
+	deleted bool
+}
+
+func (f *fakeThreadLikeRepo) Create(t *models.ThreadLike) error {
+	f.created = t
+	return f.createErr
+}
+
+func (f *fakeThreadLikeRepo) Delete(userID, threadID uint) error {
+	f.deleted = true
+	return f.deleteErr
+}
+
+func (f *fakeThreadLikeRepo) Exists(userID, threadID uint) (bool, error) {
+	return false, nil
+}
+
 func gormModel(id uint) gorm.Model {
 	return gorm.Model{
 		ID: id,

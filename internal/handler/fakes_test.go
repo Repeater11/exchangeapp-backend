@@ -117,3 +117,25 @@ func (f *fakeReplyRepo) DeleteByID(id uint) error {
 	f.deletedID = id
 	return f.deleteErr
 }
+
+type fakeThreadLikeRepo struct {
+	createErr error
+	deleteErr error
+
+	created *models.ThreadLike
+	deleted bool
+}
+
+func (f *fakeThreadLikeRepo) Create(t *models.ThreadLike) error {
+	f.created = t
+	return f.createErr
+}
+
+func (f *fakeThreadLikeRepo) Delete(userID, threadID uint) error {
+	f.deleted = true
+	return f.deleteErr
+}
+
+func (f *fakeThreadLikeRepo) Exists(userID, threadID uint) (bool, error) {
+	return false, nil
+}
