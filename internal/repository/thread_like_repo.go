@@ -16,6 +16,7 @@ type ThreadLikeRepository interface {
 	Create(*models.ThreadLike) error
 	Delete(userID, threadID uint) error
 	Exists(userID, threadID uint) (bool, error)
+	CountByThreadID(threadID uint) (int64, error)
 }
 
 type ThreadLikeRepo struct {
@@ -41,7 +42,8 @@ func (r *ThreadLikeRepo) Create(t *models.ThreadLike) error {
 }
 
 func (r *ThreadLikeRepo) Delete(userID, threadID uint) error {
-	res := r.db.Where("user_id = ? and thread_id = ?", userID, threadID).
+	res := r.db.Unscoped().
+		Where("user_id = ? and thread_id = ?", userID, threadID).
 		Delete(&models.ThreadLike{})
 	if res.Error != nil {
 		return fmt.Errorf("删除帖子点赞失败：%w", res.Error)
@@ -60,4 +62,14 @@ func (r *ThreadLikeRepo) Exists(userID, threadID uint) (bool, error) {
 		return false, fmt.Errorf("查询帖子点赞失败：%w", err)
 	}
 	return cnt > 0, nil
+}
+
+func (r *ThreadLikeRepo) CountByThreadID(threadID uint) (int64, error) {
+	var total int64
+	if err := r.db.Model(&models.ThreadLike{}).
+		Where("thread_id = ?", threadID).
+		Count(&total).Error; err != nil {
+		return 0, fmt.Errorf("查询帖子点赞失败：%w", err)
+	}
+	return total, nil
 }

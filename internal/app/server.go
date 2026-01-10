@@ -44,16 +44,15 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	userHandler := handler.NewUserHandler(userSvc)
 
 	threadRepo := repository.NewThreadRepository(gormDB)
-	threadSvc := service.NewThreadService(threadRepo)
+	threadLikeRepo := repository.NewThreadLikeRepository(gormDB)
+	threadSvc := service.NewThreadService(threadRepo, threadLikeRepo)
+	threadLikeSvc := service.NewThreadLikeService(threadRepo, threadLikeRepo)
 	threadHandler := handler.NewThreadHandler(threadSvc)
+	threadLikeHandler := handler.NewThreadLikeHandler(threadLikeSvc)
 
 	replyRepo := repository.NewReplyRepository(gormDB)
 	replySvc := service.NewReplyService(replyRepo, threadRepo)
 	replyHandler := handler.NewReplyHandler(replySvc)
-
-	threadLikeRepo := repository.NewThreadLikeRepository(gormDB)
-	threadLikeSvc := service.NewThreadLikeService(threadRepo, threadLikeRepo)
-	threadLikeHandler := handler.NewThreadLikeHandler(threadLikeSvc)
 
 	e.POST("/register", userHandler.Register)
 	e.POST("/login", userHandler.Login)

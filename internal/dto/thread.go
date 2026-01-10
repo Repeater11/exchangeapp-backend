@@ -19,6 +19,7 @@ type ThreadDetailResp struct {
 	Title     string    `json:"title"`
 	Content   string    `json:"content"`
 	UserID    uint      `json:"user_id"`
+	LikeCount int64     `json:"like_count"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
