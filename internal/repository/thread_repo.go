@@ -113,3 +113,11 @@ func (r *ThreadRepo) IncrementLikeCount(threadID uint, delta int) error {
 	}
 	return nil
 }
+
+func (r *ThreadRepo) Transaction(fn func(tx *gorm.DB) error) error {
+	return r.db.Transaction(fn)
+}
+
+func (r *ThreadRepo) WithTx(tx *gorm.DB) ThreadRepository {
+	return &ThreadRepo{db: tx}
+}

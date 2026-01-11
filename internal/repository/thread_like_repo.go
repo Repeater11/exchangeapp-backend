@@ -73,3 +73,7 @@ func (r *ThreadLikeRepo) CountByThreadID(threadID uint) (int64, error) {
 	}
 	return total, nil
 }
+
+func (r *ThreadLikeRepo) WithTx(tx *gorm.DB) ThreadLikeRepository {
+	return &ThreadLikeRepo{db: tx}
+}
