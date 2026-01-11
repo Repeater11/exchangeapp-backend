@@ -10,12 +10,17 @@ import (
 type ThreadLikeService struct {
 	threadRepo repository.ThreadRepository
 	likeRepo   repository.ThreadLikeRepository
+	counter    repository.ThreadLikeCounter
 }
 
-func NewThreadLikeService(threadRepo repository.ThreadRepository, likeRepo repository.ThreadLikeRepository) *ThreadLikeService {
+func NewThreadLikeService(
+	threadRepo repository.ThreadRepository,
+	likeRepo repository.ThreadLikeRepository,
+	counter repository.ThreadLikeCounter) *ThreadLikeService {
 	return &ThreadLikeService{
 		threadRepo: threadRepo,
 		likeRepo:   likeRepo,
+		counter:    counter,
 	}
 }
 
@@ -23,11 +28,13 @@ func (s *ThreadLikeService) Like(userID, threadID uint) error {
 	txer, ok1 := s.threadRepo.(repository.Transactioner)
 	trWithTx, ok2 := s.threadRepo.(repository.ThreadRepoWithTx)
 	lrWithTx, ok3 := s.likeRepo.(repository.ThreadLikeRepoWithTx)
+	ctrWithTx, ok4 := s.counter.(repository.ThreadLikeCounterWithTx)
 
-	if ok1 && ok2 && ok3 {
+	if ok1 && ok2 && ok3 && ok4 {
 		return txer.Transaction(func(tx *gorm.DB) error {
 			tr := trWithTx.WithTx(tx)
 			lr := lrWithTx.WithTx(tx)
+			ctr := ctrWithTx.WithTx(tx)
 
 			t, err := tr.FindByID(threadID)
 			if err != nil {
@@ -43,7 +50,7 @@ func (s *ThreadLikeService) Like(userID, threadID uint) error {
 			}); err != nil {
 				return err
 			}
-			return tr.IncrementLikeCount(threadID, 1)
+			return ctr.IncrementLikeCount(threadID, 1)
 		})
 	}
 
@@ -62,18 +69,20 @@ func (s *ThreadLikeService) Like(userID, threadID uint) error {
 		return err
 	}
 
-	return s.threadRepo.IncrementLikeCount(threadID, 1)
+	return s.counter.IncrementLikeCount(threadID, 1)
 }
 
 func (s *ThreadLikeService) Unlike(userID, threadID uint) error {
 	txer, ok1 := s.threadRepo.(repository.Transactioner)
 	trWithTx, ok2 := s.threadRepo.(repository.ThreadRepoWithTx)
 	lrWithTx, ok3 := s.likeRepo.(repository.ThreadLikeRepoWithTx)
+	ctrWithTx, ok4 := s.counter.(repository.ThreadLikeCounterWithTx)
 
-	if ok1 && ok2 && ok3 {
+	if ok1 && ok2 && ok3 && ok4 {
 		return txer.Transaction(func(tx *gorm.DB) error {
 			tr := trWithTx.WithTx(tx)
 			lr := lrWithTx.WithTx(tx)
+			ctr := ctrWithTx.WithTx(tx)
 
 			t, err := tr.FindByID(threadID)
 			if err != nil {
@@ -86,7 +95,7 @@ func (s *ThreadLikeService) Unlike(userID, threadID uint) error {
 			if err := lr.Delete(userID, threadID); err != nil {
 				return err
 			}
-			return tr.IncrementLikeCount(threadID, -1)
+			return ctr.IncrementLikeCount(threadID, -1)
 		})
 	}
 
@@ -101,7 +110,7 @@ func (s *ThreadLikeService) Unlike(userID, threadID uint) error {
 	if err := s.likeRepo.Delete(userID, threadID); err != nil {
 		return err
 	}
-	return s.threadRepo.IncrementLikeCount(threadID, -1)
+	return s.counter.IncrementLikeCount(threadID, -1)
 }
 
 func (s *ThreadLikeService) IsLiked(userID, threadID uint) (bool, error) {

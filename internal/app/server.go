@@ -46,7 +46,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	threadRepo := repository.NewThreadRepository(gormDB)
 	threadLikeRepo := repository.NewThreadLikeRepository(gormDB)
 	threadSvc := service.NewThreadService(threadRepo, threadLikeRepo)
-	threadLikeSvc := service.NewThreadLikeService(threadRepo, threadLikeRepo)
+	threadLikeSvc := service.NewThreadLikeService(threadRepo, threadLikeRepo, threadRepo)
 	threadHandler := handler.NewThreadHandler(threadSvc)
 	threadLikeHandler := handler.NewThreadLikeHandler(threadLikeSvc)
 

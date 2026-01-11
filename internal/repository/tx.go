@@ -13,3 +13,7 @@ type ThreadRepoWithTx interface {
 type ThreadLikeRepoWithTx interface {
 	WithTx(tx *gorm.DB) ThreadLikeRepository
 }
+
+type ThreadLikeCounterWithTx interface {
+	WithTx(tx *gorm.DB) ThreadLikeCounter
+}
