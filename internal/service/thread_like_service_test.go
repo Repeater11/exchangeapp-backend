@@ -26,7 +26,7 @@ func TestThreadLikeServiceLike(t *testing.T) {
 			}
 			likeRepo := &fakeThreadLikeRepo{createErr: c.repoErr}
 
-			svc := NewThreadLikeService(threadRepo, likeRepo)
+			svc := NewThreadLikeService(threadRepo, likeRepo, threadRepo)
 			err := svc.Like(1, 1)
 
 			if !errors.Is(err, c.wantErr) {
@@ -56,7 +56,7 @@ func TestThreadLikeServiceUnlike(t *testing.T) {
 			}
 			likeRepo := &fakeThreadLikeRepo{deleteErr: c.repoErr}
 
-			svc := NewThreadLikeService(threadRepo, likeRepo)
+			svc := NewThreadLikeService(threadRepo, likeRepo, threadRepo)
 			err := svc.Unlike(1, 1)
 
 			if !errors.Is(err, c.wantErr) {
@@ -93,7 +93,7 @@ func TestThreadLikeServiceIsLiked(t *testing.T) {
 				existsErr: c.repoErr,
 			}
 
-			svc := NewThreadLikeService(threadRepo, likeRepo)
+			svc := NewThreadLikeService(threadRepo, likeRepo, threadRepo)
 			got, err := svc.IsLiked(1, 1)
 
 			if !errors.Is(err, c.wantErr) {

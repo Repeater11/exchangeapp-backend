@@ -64,6 +64,10 @@ func (f *fakeThreadRepo) IncrementLikeCount(threadID uint, delta int) error {
 	return nil
 }
 
+func (f *fakeThreadRepo) GetLikeCount(threadID uint) (int64, error) {
+	return 0, nil
+}
+
 type fakeReplyRepo struct {
 	createErr error
 	listErr   error
