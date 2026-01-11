@@ -22,7 +22,7 @@ func TestThreadServiceUpdate(t *testing.T) {
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			repo := &fakeThreadRepo{findResult: c.thread}
-			svc := NewThreadService(repo, &fakeThreadLikeRepo{})
+			svc := NewThreadService(repo, &fakeThreadLikeRepo{}, repo)
 
 			req := dto.UpdateThreadReq{Title: "t", Content: "c"}
 			_, err := svc.Update(c.userID, 1, req)
@@ -38,7 +38,7 @@ func TestThreadServiceDelete(t *testing.T) {
 	repo := &fakeThreadRepo{
 		findResult: thread(1, 1),
 	}
-	svc := NewThreadService(repo, &fakeThreadLikeRepo{})
+	svc := NewThreadService(repo, &fakeThreadLikeRepo{}, repo)
 
 	if err := svc.Delete(1, 1); err != nil {
 		t.Fatalf("unexpected error: %v", err)
@@ -50,7 +50,7 @@ func TestThreadServiceListByUserID(t *testing.T) {
 		listResult:  []models.Thread{*thread(1, 1)},
 		countResult: 1,
 	}
-	svc := NewThreadService(repo, &fakeThreadLikeRepo{})
+	svc := NewThreadService(repo, &fakeThreadLikeRepo{}, repo)
 
 	resp, err := svc.ListByUserID(1, 1, 10)
 	if err != nil {

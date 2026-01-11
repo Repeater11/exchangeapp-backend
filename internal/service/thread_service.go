@@ -9,10 +9,19 @@ import (
 type ThreadService struct {
 	repo     repository.ThreadRepository
 	likeRepo repository.ThreadLikeRepository
+	counter  repository.ThreadLikeCounter
 }
 
-func NewThreadService(repo repository.ThreadRepository, likeRepo repository.ThreadLikeRepository) *ThreadService {
-	return &ThreadService{repo: repo, likeRepo: likeRepo}
+func NewThreadService(
+	repo repository.ThreadRepository,
+	likeRepo repository.ThreadLikeRepository,
+	counter repository.ThreadLikeCounter,
+) *ThreadService {
+	return &ThreadService{
+		repo:     repo,
+		likeRepo: likeRepo,
+		counter:  counter,
+	}
 }
 
 func (s *ThreadService) Create(userID uint, req dto.CreateThreadReq) (*dto.ThreadDetailResp, error) {
@@ -104,12 +113,17 @@ func (s *ThreadService) GetByID(id uint) (*dto.ThreadDetailResp, error) {
 		return nil, ErrThreadNotFound
 	}
 
+	likeCount, err := s.counter.GetLikeCount(t.ID)
+	if err != nil {
+		return nil, err
+	}
+
 	return &dto.ThreadDetailResp{
 		ID:        t.ID,
 		Title:     t.Title,
 		Content:   t.Content,
 		UserID:    t.UserID,
-		LikeCount: t.LikeCount,
+		LikeCount: likeCount,
 		CreatedAt: t.CreatedAt,
 	}, nil
 }

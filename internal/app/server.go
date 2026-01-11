@@ -15,12 +15,14 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
 )
 
 type Server struct {
 	e       *gin.Engine
 	db      *gorm.DB
+	rdb     *redis.Client
 	httpSrv *http.Server
 }
 
@@ -39,14 +41,25 @@ func NewServer(cfg *config.Config) (*Server, error) {
 		return nil, fmt.Errorf("数据库迁移失败：%w", err)
 	}
 
+	rdb, err := db.NewRedis(&cfg.Redis)
+	if err != nil {
+		if sqlDB, dbErr := gormDB.DB(); dbErr == nil {
+			sqlDB.Close()
+		}
+		return nil, err
+	}
+
 	userRepo := repository.NewUserRepository(gormDB)
 	userSvc := service.NewUserService(userRepo, cfg.JWT)
 	userHandler := handler.NewUserHandler(userSvc)
 
+	redisCounter := repository.NewRedisLikeCounter(rdb)
+
 	threadRepo := repository.NewThreadRepository(gormDB)
 	threadLikeRepo := repository.NewThreadLikeRepository(gormDB)
-	threadSvc := service.NewThreadService(threadRepo, threadLikeRepo)
-	threadLikeSvc := service.NewThreadLikeService(threadRepo, threadLikeRepo, threadRepo)
+	likeCounter := repository.NewCachedThreadLikeCounter(threadRepo, redisCounter)
+	threadSvc := service.NewThreadService(threadRepo, threadLikeRepo, likeCounter)
+	threadLikeSvc := service.NewThreadLikeService(threadRepo, threadLikeRepo, likeCounter)
 	threadHandler := handler.NewThreadHandler(threadSvc)
 	threadLikeHandler := handler.NewThreadLikeHandler(threadLikeSvc)
 
@@ -92,6 +105,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	return &Server{
 		e:       e,
 		db:      gormDB,
+		rdb:     rdb,
 		httpSrv: httpSrv,
 	}, nil
 }
@@ -108,26 +122,34 @@ func (s *Server) Shutdown(ctx context.Context) error {
 		}
 	}
 
-	dbErr := s.Close()
-	if dbErr != nil {
-		dbErr = fmt.Errorf("关闭数据库失败：%w", dbErr)
+	closeErr := s.Close()
+	if closeErr != nil {
+		closeErr = fmt.Errorf("关闭资源失败：%w", closeErr)
 	}
 
-	return errors.Join(httpErr, dbErr)
+	return errors.Join(httpErr, closeErr)
 }
 
 func (s *Server) Close() error {
-	if s.db == nil {
-		return nil
+	var dbErr error
+	var redisErr error
+
+	if s.db != nil {
+		sqlDB, err := s.db.DB()
+		if err != nil {
+			dbErr = fmt.Errorf("获取底层连接失败：%w", err)
+		} else if err := sqlDB.Close(); err != nil {
+			dbErr = fmt.Errorf("关闭 MySQL 失败：%w", err)
+		}
 	}
 
-	sqlDB, err := s.db.DB()
-
-	if err != nil {
-		return fmt.Errorf("获取底层连接失败：%w", err)
+	if s.rdb != nil {
+		if err := s.rdb.Close(); err != nil {
+			redisErr = fmt.Errorf("关闭 Redis 失败：%w", err)
+		}
 	}
 
-	return sqlDB.Close()
+	return errors.Join(dbErr, redisErr)
 }
 
 func runMigrations(db *gorm.DB) error {

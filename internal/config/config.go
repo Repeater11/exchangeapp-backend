@@ -12,6 +12,7 @@ import (
 type Config struct {
 	App      AppConfig
 	Database DatabaseConfig
+	Redis    RedisConfig
 	JWT      JWTConfig
 }
 
@@ -26,6 +27,12 @@ type DatabaseConfig struct {
 	User     string
 	Password string
 	Name     string
+}
+
+type RedisConfig struct {
+	Addr     string
+	Password string
+	DB       int
 }
 
 type JWTConfig struct {
