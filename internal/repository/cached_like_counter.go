@@ -1,21 +1,31 @@
 package repository
 
-import "gorm.io/gorm"
+import (
+	"strconv"
+	"time"
+
+	"golang.org/x/sync/singleflight"
+	"gorm.io/gorm"
+)
 
 type threadLikeCache interface {
 	ThreadLikeCounter
 	setLikeCount(threadID uint, value int64) error
+	TryLockLikeCount(threadID uint, token string, ttl time.Duration) (bool, error)
+	UnlockLikeCount(threadID uint, token string) error
 }
 
 type CachedThreadLikeCounter struct {
 	db    ThreadRepository
 	cache threadLikeCache
+	sf    *singleflight.Group
 }
 
 func NewCachedThreadLikeCounter(db ThreadRepository, cache *RedisLikeCounter) *CachedThreadLikeCounter {
 	return &CachedThreadLikeCounter{
 		db:    db,
 		cache: cache,
+		sf:    &singleflight.Group{},
 	}
 }
 
@@ -29,18 +39,40 @@ func (c *CachedThreadLikeCounter) IncrementLikeCount(threadID uint, delta int) e
 }
 
 func (c *CachedThreadLikeCounter) GetLikeCount(threadID uint) (int64, error) {
-	val, err := c.cache.GetLikeCount(threadID)
-	if err == nil {
+	if val, err := c.cache.GetLikeCount(threadID); err == nil {
 		return val, nil
 	}
 
-	val, err = c.db.GetLikeCount(threadID)
+	key := "thread_like_count:" + strconv.FormatUint(uint64(threadID), 10)
+	v, err, _ := c.sf.Do(key, func() (interface{}, error) {
+		token := strconv.FormatInt(time.Now().UnixNano(), 10)
+		locked, _ := c.cache.TryLockLikeCount(threadID, token, likeCountLockTTL)
+		if locked {
+			defer c.cache.UnlockLikeCount(threadID, token)
+			val, err := c.db.GetLikeCount(threadID)
+			if err != nil {
+				return nil, err
+			}
+			_ = c.cache.setLikeCount(threadID, val)
+			return val, err
+		}
+
+		time.Sleep(20 * time.Millisecond)
+		if val, err := c.cache.GetLikeCount(threadID); err == nil {
+			return val, nil
+		}
+
+		val, err := c.db.GetLikeCount(threadID)
+		if err != nil {
+			return nil, err
+		}
+		_ = c.cache.setLikeCount(threadID, val)
+		return val, nil
+	})
 	if err != nil {
 		return 0, err
 	}
-
-	_ = c.cache.setLikeCount(threadID, val)
-	return val, nil
+	return v.(int64), nil
 }
 
 func (c *CachedThreadLikeCounter) WithTx(tx *gorm.DB) ThreadLikeCounter {
@@ -51,5 +83,6 @@ func (c *CachedThreadLikeCounter) WithTx(tx *gorm.DB) ThreadLikeCounter {
 	return &CachedThreadLikeCounter{
 		db:    tr.WithTx(tx),
 		cache: c.cache,
+		sf:    c.sf,
 	}
 }

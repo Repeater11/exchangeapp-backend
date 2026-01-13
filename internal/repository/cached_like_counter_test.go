@@ -3,8 +3,10 @@ package repository
 import (
 	"errors"
 	"testing"
+	"time"
 
 	"exchangeapp/internal/models"
+	"golang.org/x/sync/singleflight"
 )
 
 type fakeThreadRepo struct {
@@ -68,6 +70,9 @@ type fakeLikeCache struct {
 	incErr    error
 	incCalls  int
 	lastDelta int
+	lockErr   error
+	lockCalls int
+	unlockErr error
 }
 
 func (f *fakeLikeCache) IncrementLikeCount(threadID uint, delta int) error {
@@ -86,10 +91,22 @@ func (f *fakeLikeCache) setLikeCount(threadID uint, value int64) error {
 	return f.setErr
 }
 
+func (f *fakeLikeCache) TryLockLikeCount(threadID uint, token string, ttl time.Duration) (bool, error) {
+	f.lockCalls++
+	if f.lockErr != nil {
+		return false, f.lockErr
+	}
+	return true, nil
+}
+
+func (f *fakeLikeCache) UnlockLikeCount(threadID uint, token string) error {
+	return f.unlockErr
+}
+
 func TestCachedThreadLikeCounterGetLikeCountCacheHit(t *testing.T) {
 	db := &fakeThreadRepo{getVal: 7}
 	cache := &fakeLikeCache{getVal: 9}
-	counter := &CachedThreadLikeCounter{db: db, cache: cache}
+	counter := &CachedThreadLikeCounter{db: db, cache: cache, sf: &singleflight.Group{}}
 
 	val, err := counter.GetLikeCount(1)
 	if err != nil {
@@ -106,7 +123,7 @@ func TestCachedThreadLikeCounterGetLikeCountCacheHit(t *testing.T) {
 func TestCachedThreadLikeCounterGetLikeCountCacheMiss(t *testing.T) {
 	db := &fakeThreadRepo{getVal: 5}
 	cache := &fakeLikeCache{getErr: ErrLikeCountNotFound}
-	counter := &CachedThreadLikeCounter{db: db, cache: cache}
+	counter := &CachedThreadLikeCounter{db: db, cache: cache, sf: &singleflight.Group{}}
 
 	val, err := counter.GetLikeCount(1)
 	if err != nil {
@@ -126,7 +143,7 @@ func TestCachedThreadLikeCounterGetLikeCountCacheMiss(t *testing.T) {
 func TestCachedThreadLikeCounterGetLikeCountCacheErrorFallback(t *testing.T) {
 	db := &fakeThreadRepo{getVal: 3}
 	cache := &fakeLikeCache{getErr: errors.New("boom")}
-	counter := &CachedThreadLikeCounter{db: db, cache: cache}
+	counter := &CachedThreadLikeCounter{db: db, cache: cache, sf: &singleflight.Group{}}
 
 	val, err := counter.GetLikeCount(1)
 	if err != nil {
@@ -143,7 +160,7 @@ func TestCachedThreadLikeCounterGetLikeCountCacheErrorFallback(t *testing.T) {
 func TestCachedThreadLikeCounterIncrementLikeCountDBError(t *testing.T) {
 	db := &fakeThreadRepo{incErr: errors.New("boom")}
 	cache := &fakeLikeCache{}
-	counter := &CachedThreadLikeCounter{db: db, cache: cache}
+	counter := &CachedThreadLikeCounter{db: db, cache: cache, sf: &singleflight.Group{}}
 
 	if err := counter.IncrementLikeCount(1, 1); err == nil {
 		t.Fatalf("expected error, got nil")
@@ -156,7 +173,7 @@ func TestCachedThreadLikeCounterIncrementLikeCountDBError(t *testing.T) {
 func TestCachedThreadLikeCounterIncrementLikeCountOK(t *testing.T) {
 	db := &fakeThreadRepo{}
 	cache := &fakeLikeCache{incErr: errors.New("cache")}
-	counter := &CachedThreadLikeCounter{db: db, cache: cache}
+	counter := &CachedThreadLikeCounter{db: db, cache: cache, sf: &singleflight.Group{}}
 
 	if err := counter.IncrementLikeCount(1, -1); err != nil {
 		t.Fatalf("unexpected error: %v", err)
