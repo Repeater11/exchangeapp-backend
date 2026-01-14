@@ -1,6 +1,10 @@
 package handler
 
-import "strconv"
+import (
+	"strconv"
+	"strings"
+	"time"
+)
 
 const (
 	defaultPage = 1
@@ -22,4 +26,26 @@ func parsePageSize(pageStr, sizeStr string) (int, int) {
 		size = s
 	}
 	return page, size
+}
+
+func parseCursor(raw string) (time.Time, uint, bool) {
+	if raw == "" {
+		return time.Time{}, 0, false
+	}
+	parts := strings.Split(raw, "_")
+	if len(parts) != 2 {
+		return time.Time{}, 0, false
+	}
+
+	ts, err := strconv.ParseInt(parts[0], 10, 64)
+	if err != nil {
+		return time.Time{}, 0, false
+	}
+
+	id, err := strconv.ParseUint(parts[1], 10, 64)
+	if err != nil {
+		return time.Time{}, 0, false
+	}
+
+	return time.Unix(0, ts), uint(id), true
 }

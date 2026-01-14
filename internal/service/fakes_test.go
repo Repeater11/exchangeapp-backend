@@ -1,16 +1,21 @@
 package service
 
 import (
+	"time"
+
 	"exchangeapp/internal/models"
 
 	"gorm.io/gorm"
 )
 
 type fakeThreadRepo struct {
-	listResult  []models.Thread
-	listErr     error
-	countResult int64
-	countErr    error
+	listResult         []models.Thread
+	listErr            error
+	listAfterResult    []models.Thread
+	listAfterErr       error
+	listByUserAfterRes []models.Thread
+	countResult        int64
+	countErr           error
 
 	findResult *models.Thread
 	findErr    error
@@ -30,11 +35,25 @@ func (f *fakeThreadRepo) List(int, int) ([]models.Thread, error) {
 	return f.listResult, f.listErr
 }
 
+func (f *fakeThreadRepo) ListAfter(cursorTime time.Time, cursorID uint, limit int) ([]models.Thread, error) {
+	if f.listAfterResult != nil || f.listAfterErr != nil {
+		return f.listAfterResult, f.listAfterErr
+	}
+	return f.listResult, f.listErr
+}
+
 func (f *fakeThreadRepo) Count() (int64, error) {
 	return f.countResult, f.countErr
 }
 
 func (f *fakeThreadRepo) ListByUserID(userID uint, limit, offset int) ([]models.Thread, error) {
+	return f.listResult, f.listErr
+}
+
+func (f *fakeThreadRepo) ListByUserIDAfter(userID uint, cursorTime time.Time, cursorID uint, limit int) ([]models.Thread, error) {
+	if f.listByUserAfterRes != nil || f.listAfterErr != nil {
+		return f.listByUserAfterRes, f.listAfterErr
+	}
 	return f.listResult, f.listErr
 }
 

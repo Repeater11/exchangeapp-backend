@@ -26,6 +26,10 @@ func (f *fakeThreadRepo) List(int, int) ([]models.Thread, error) {
 	return nil, nil
 }
 
+func (f *fakeThreadRepo) ListAfter(time.Time, uint, int) ([]models.Thread, error) {
+	return nil, nil
+}
+
 func (f *fakeThreadRepo) FindByID(uint) (*models.Thread, error) {
 	return nil, nil
 }
@@ -35,6 +39,10 @@ func (f *fakeThreadRepo) Count() (int64, error) {
 }
 
 func (f *fakeThreadRepo) ListByUserID(uint, int, int) ([]models.Thread, error) {
+	return nil, nil
+}
+
+func (f *fakeThreadRepo) ListByUserIDAfter(uint, time.Time, uint, int) ([]models.Thread, error) {
 	return nil, nil
 }
 

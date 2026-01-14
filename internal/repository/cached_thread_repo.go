@@ -134,12 +134,20 @@ func (c *CachedThreadRepo) List(limit, offset int) ([]models.Thread, error) {
 	return c.db.List(limit, offset)
 }
 
+func (c *CachedThreadRepo) ListAfter(cursorTime time.Time, cursorID uint, limit int) ([]models.Thread, error) {
+	return c.db.ListAfter(cursorTime, cursorID, limit)
+}
+
 func (c *CachedThreadRepo) Count() (int64, error) {
 	return c.db.Count()
 }
 
 func (c *CachedThreadRepo) ListByUserID(userID uint, limit, offset int) ([]models.Thread, error) {
 	return c.db.ListByUserID(userID, limit, offset)
+}
+
+func (c *CachedThreadRepo) ListByUserIDAfter(userID uint, cursorTime time.Time, cursorID uint, limit int) ([]models.Thread, error) {
+	return c.db.ListByUserIDAfter(userID, cursorTime, cursorID, limit)
 }
 
 func (c *CachedThreadRepo) CountByUserID(userID uint) (int64, error) {

@@ -38,13 +38,27 @@ func (h *ThreadHandler) Create(ctx *gin.Context) {
 }
 
 func (h *ThreadHandler) List(ctx *gin.Context) {
+	cursor := ctx.Query("cursor")
 	page, size := parsePageSize(ctx.Query("page"), ctx.Query("size"))
-	resp, err := h.svc.List(page, size)
-	if err != nil {
-		jsonError(ctx, http.StatusInternalServerError, "获取帖子失败")
-		return
+	if cursor != "" {
+		cursorTime, cursorID, ok := parseCursor(cursor)
+		if !ok {
+			jsonError(ctx, http.StatusBadRequest, "cursor 无效")
+			return
+		}
+		resp, err := h.svc.ListAfter(cursorTime, cursorID, size)
+		if err != nil {
+			jsonError(ctx, http.StatusInternalServerError, "获取帖子失败")
+		}
+		ctx.JSON(http.StatusOK, resp)
+	} else {
+		resp, err := h.svc.List(page, size)
+		if err != nil {
+			jsonError(ctx, http.StatusInternalServerError, "获取帖子失败")
+			return
+		}
+		ctx.JSON(http.StatusOK, resp)
 	}
-	ctx.JSON(http.StatusOK, resp)
 }
 
 func (h *ThreadHandler) ListMine(ctx *gin.Context) {
@@ -53,13 +67,28 @@ func (h *ThreadHandler) ListMine(ctx *gin.Context) {
 		return
 	}
 
+	cursor := ctx.Query("cursor")
 	page, size := parsePageSize(ctx.Query("page"), ctx.Query("size"))
-	resp, err := h.svc.ListByUserID(userID, page, size)
-	if err != nil {
-		jsonError(ctx, http.StatusInternalServerError, "获取帖子失败")
-		return
+	if cursor != "" {
+		cursorTime, cursorID, ok := parseCursor(cursor)
+		if !ok {
+			jsonError(ctx, http.StatusBadRequest, "cursor 无效")
+			return
+		}
+		resp, err := h.svc.ListByUserIDAfter(userID, cursorTime, cursorID, size)
+		if err != nil {
+			jsonError(ctx, http.StatusInternalServerError, "获取帖子失败")
+			return
+		}
+		ctx.JSON(http.StatusOK, resp)
+	} else {
+		resp, err := h.svc.ListByUserID(userID, page, size)
+		if err != nil {
+			jsonError(ctx, http.StatusInternalServerError, "获取帖子失败")
+			return
+		}
+		ctx.JSON(http.StatusOK, resp)
 	}
-	ctx.JSON(http.StatusOK, resp)
 }
 
 func (h *ThreadHandler) Detail(ctx *gin.Context) {

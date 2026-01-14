@@ -24,10 +24,11 @@ type ThreadDetailResp struct {
 }
 
 type ThreadListResp struct {
-	Items []ThreadSummaryResp `json:"items"`
-	Total int64               `json:"total"`
-	Page  int                 `json:"page"`
-	Size  int                 `json:"size"`
+	Items      []ThreadSummaryResp `json:"items"`
+	Total      int64               `json:"total"`
+	Page       int                 `json:"page"`
+	Size       int                 `json:"size"`
+	NextCursor string              `json:"next_cursor"`
 }
 
 type UpdateThreadReq struct {

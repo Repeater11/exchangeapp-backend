@@ -4,6 +4,8 @@ import (
 	"exchangeapp/internal/dto"
 	"exchangeapp/internal/models"
 	"exchangeapp/internal/repository"
+	"fmt"
+	"time"
 )
 
 type ThreadService struct {
@@ -74,6 +76,36 @@ func (s *ThreadService) List(page, size int) (*dto.ThreadListResp, error) {
 	}, nil
 }
 
+func (s *ThreadService) ListAfter(cursorTime time.Time, cursorID uint, size int) (*dto.ThreadListResp, error) {
+	ts, err := s.repo.ListAfter(cursorTime, cursorID, size)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]dto.ThreadSummaryResp, len(ts))
+	for i := range ts {
+		items[i] = dto.ThreadSummaryResp{
+			ID:        ts[i].ID,
+			Title:     ts[i].Title,
+			UserID:    ts[i].UserID,
+			CreatedAt: ts[i].CreatedAt,
+		}
+	}
+
+	next := ""
+	if len(ts) > 0 {
+		last := ts[len(ts)-1]
+		next = fmt.Sprintf("%d_%d", last.CreatedAt.UnixNano(), last.ID)
+	}
+	return &dto.ThreadListResp{
+		Items:      items,
+		Size:       size,
+		Page:       0,
+		Total:      0,
+		NextCursor: next,
+	}, nil
+}
+
 func (s *ThreadService) ListByUserID(userID uint, page, size int) (*dto.ThreadListResp, error) {
 	offset := (page - 1) * size
 
@@ -101,6 +133,36 @@ func (s *ThreadService) ListByUserID(userID uint, page, size int) (*dto.ThreadLi
 		Total: total,
 		Page:  page,
 		Size:  size,
+	}, nil
+}
+
+func (s *ThreadService) ListByUserIDAfter(userID uint, cursorTime time.Time, cursorID uint, size int) (*dto.ThreadListResp, error) {
+	ts, err := s.repo.ListByUserIDAfter(userID, cursorTime, cursorID, size)
+	if err != nil {
+		return nil, err
+	}
+
+	items := make([]dto.ThreadSummaryResp, len(ts))
+	for i := range ts {
+		items[i] = dto.ThreadSummaryResp{
+			ID:        ts[i].ID,
+			Title:     ts[i].Title,
+			UserID:    ts[i].UserID,
+			CreatedAt: ts[i].CreatedAt,
+		}
+	}
+
+	next := ""
+	if len(ts) > 0 {
+		last := ts[len(ts)-1]
+		next = fmt.Sprintf("%d_%d", last.CreatedAt.UnixNano(), last.ID)
+	}
+	return &dto.ThreadListResp{
+		Items:      items,
+		Size:       size,
+		Page:       0,
+		Total:      0,
+		NextCursor: next,
 	}, nil
 }
 

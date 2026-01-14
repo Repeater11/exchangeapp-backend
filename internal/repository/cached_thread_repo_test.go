@@ -27,6 +27,10 @@ func (f *fakeThreadRepoCache) List(int, int) ([]models.Thread, error) {
 	return nil, nil
 }
 
+func (f *fakeThreadRepoCache) ListAfter(time.Time, uint, int) ([]models.Thread, error) {
+	return nil, nil
+}
+
 func (f *fakeThreadRepoCache) FindByID(id uint) (*models.Thread, error) {
 	f.findCalls++
 	return f.findVal, f.findErr
@@ -37,6 +41,10 @@ func (f *fakeThreadRepoCache) Count() (int64, error) {
 }
 
 func (f *fakeThreadRepoCache) ListByUserID(uint, int, int) ([]models.Thread, error) {
+	return nil, nil
+}
+
+func (f *fakeThreadRepoCache) ListByUserIDAfter(uint, time.Time, uint, int) ([]models.Thread, error) {
 	return nil, nil
 }
 

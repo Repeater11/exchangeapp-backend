@@ -9,8 +9,10 @@ import (
 	"exchangeapp/internal/service"
 	"net/http"
 	"net/http/httptest"
+	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -58,6 +60,49 @@ func TestThreadList(t *testing.T) {
 	}
 	if resp.Total != 1 || len(resp.Items) != 1 {
 		t.Fatalf("unexpected response: %+v", resp)
+	}
+}
+
+func TestThreadListCursorInvalid(t *testing.T) {
+	repo := &fakeThreadRepo{}
+	r := newThreadRouter(repo, 0)
+
+	req := httptest.NewRequest(http.MethodGet, "/threads?cursor=bad", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected %d, got %d, body=%s", http.StatusBadRequest, w.Code, w.Body.String())
+	}
+}
+
+func TestThreadListCursorOK(t *testing.T) {
+	ts := time.Unix(0, 123)
+	repo := &fakeThreadRepo{
+		listAfterResult: []models.Thread{
+			{Model: gorm.Model{ID: 7, CreatedAt: ts}, Title: "t1", UserID: 1},
+		},
+	}
+	r := newThreadRouter(repo, 0)
+
+	req := httptest.NewRequest(http.MethodGet, "/threads?cursor=1_1&size=10", nil)
+	w := httptest.NewRecorder()
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected %d, got %d, body=%s", http.StatusOK, w.Code, w.Body.String())
+	}
+
+	var resp dto.ThreadListResp
+	if err := json.Unmarshal(w.Body.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal failed: %v", err)
+	}
+	if len(resp.Items) != 1 {
+		t.Fatalf("unexpected response: %+v", resp)
+	}
+	wantCursor := strconv.FormatInt(ts.UnixNano(), 10) + "_7"
+	if resp.NextCursor != wantCursor {
+		t.Fatalf("expected next_cursor %s, got %s", wantCursor, resp.NextCursor)
 	}
 }
 

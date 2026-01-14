@@ -1,18 +1,25 @@
 package handler
 
-import "exchangeapp/internal/models"
+import (
+	"time"
+
+	"exchangeapp/internal/models"
+)
 
 type fakeThreadRepo struct {
-	createErr error
-	listErr   error
-	countErr  error
-	findErr   error
-	updateErr error
-	deleteErr error
+	createErr    error
+	listErr      error
+	listAfterErr error
+	countErr     error
+	findErr      error
+	updateErr    error
+	deleteErr    error
 
-	listResult  []models.Thread
-	countResult int64
-	findResult  *models.Thread
+	listResult         []models.Thread
+	listAfterResult    []models.Thread
+	listByUserAfterRes []models.Thread
+	countResult        int64
+	findResult         *models.Thread
 
 	created   *models.Thread
 	updated   *models.Thread
@@ -34,11 +41,25 @@ func (f *fakeThreadRepo) List(limit, offset int) ([]models.Thread, error) {
 	return f.listResult, f.listErr
 }
 
+func (f *fakeThreadRepo) ListAfter(cursorTime time.Time, cursorID uint, limit int) ([]models.Thread, error) {
+	if f.listAfterResult != nil || f.listAfterErr != nil {
+		return f.listAfterResult, f.listAfterErr
+	}
+	return f.listResult, f.listErr
+}
+
 func (f *fakeThreadRepo) Count() (int64, error) {
 	return f.countResult, f.countErr
 }
 
 func (f *fakeThreadRepo) ListByUserID(userID uint, limit, offset int) ([]models.Thread, error) {
+	return f.listResult, f.listErr
+}
+
+func (f *fakeThreadRepo) ListByUserIDAfter(userID uint, cursorTime time.Time, cursorID uint, limit int) ([]models.Thread, error) {
+	if f.listByUserAfterRes != nil || f.listAfterErr != nil {
+		return f.listByUserAfterRes, f.listAfterErr
+	}
 	return f.listResult, f.listErr
 }
 
