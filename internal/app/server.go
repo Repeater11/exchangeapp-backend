@@ -55,7 +55,8 @@ func NewServer(cfg *config.Config) (*Server, error) {
 
 	redisCounter := repository.NewRedisLikeCounter(rdb)
 
-	threadRepo := repository.NewThreadRepository(gormDB)
+	dbthreadRepo := repository.NewThreadRepository(gormDB)
+	threadRepo := repository.NewCachedThreadRepository(dbthreadRepo, rdb)
 	threadLikeRepo := repository.NewThreadLikeRepository(gormDB)
 	likeCounter := repository.NewCachedThreadLikeCounter(threadRepo, redisCounter)
 	threadSvc := service.NewThreadService(threadRepo, threadLikeRepo, likeCounter)
