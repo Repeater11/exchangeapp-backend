@@ -118,6 +118,11 @@ paths:
         - bearerAuth: []
       parameters:
         - in: query
+          name: cursor
+          description: 游标（格式：created_at_unixnano_id），传入后优先使用游标分页
+          schema:
+            type: string
+        - in: query
           name: page
           schema:
             type: integer
@@ -189,6 +194,11 @@ paths:
       tags: [threads]
       summary: 帖子列表
       parameters:
+        - in: query
+          name: cursor
+          description: 游标（格式：created_at_unixnano_id），传入后优先使用游标分页
+          schema:
+            type: string
         - in: query
           name: page
           schema:
@@ -856,6 +866,8 @@ components:
           type: array
           items:
             $ref: "#/components/schemas/ThreadSummaryResp"
+        next_cursor:
+          type: string
         total:
           type: integer
           format: int64
