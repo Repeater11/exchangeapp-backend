@@ -10,7 +10,6 @@ import (
 
 	"github.com/redis/go-redis/v9"
 	"golang.org/x/sync/singleflight"
-	"gorm.io/gorm"
 )
 
 type fakeThreadRepoCache struct {
@@ -111,7 +110,7 @@ func (f *fakeRedisClient) Del(_ context.Context, _ ...string) *redis.IntCmd {
 }
 
 func TestCachedThreadRepoFindByIDCacheHit(t *testing.T) {
-	thread := &models.Thread{Model: gormModel(1), Title: "t1"}
+	thread := &models.Thread{ID: 1, Title: "t1"}
 	raw, _ := json.Marshal(thread)
 	db := &fakeThreadRepoCache{}
 	rdb := &fakeRedisClient{val: raw}
@@ -134,7 +133,7 @@ func TestCachedThreadRepoFindByIDCacheHit(t *testing.T) {
 }
 
 func TestCachedThreadRepoFindByIDCacheMiss(t *testing.T) {
-	thread := &models.Thread{Model: gormModel(2), Title: "t2"}
+	thread := &models.Thread{ID: 2, Title: "t2"}
 	db := &fakeThreadRepoCache{findVal: thread}
 	rdb := &fakeRedisClient{getErr: redis.Nil}
 	repo := &CachedThreadRepo{
@@ -183,8 +182,4 @@ func TestCachedThreadRepoFindByIDNotFound(t *testing.T) {
 	if rdb.setValues[repo.cacheKey(3)] != threadCacheNotFound {
 		t.Fatalf("expected not found cache set")
 	}
-}
-
-func gormModel(id uint) gorm.Model {
-	return gorm.Model{ID: id}
 }

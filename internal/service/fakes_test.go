@@ -119,7 +119,7 @@ func gormModel(id uint) gorm.Model {
 
 func thread(id, userID uint) *models.Thread {
 	return &models.Thread{
-		Model:  gormModel(id),
+		ID:     id,
 		UserID: userID,
 	}
 }

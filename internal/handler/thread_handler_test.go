@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 func newThreadRouter(repo repository.ThreadRepository, userID uint) *gin.Engine {
@@ -40,7 +39,7 @@ func newThreadRouter(repo repository.ThreadRepository, userID uint) *gin.Engine 
 func TestThreadList(t *testing.T) {
 	repo := &fakeThreadRepo{
 		listResult: []models.Thread{
-			{Model: gorm.Model{ID: 1}, Title: "t1", UserID: 1},
+			{ID: 1, Title: "t1", UserID: 1},
 		},
 		countResult: 1,
 	}
@@ -80,7 +79,7 @@ func TestThreadListCursorOK(t *testing.T) {
 	ts := time.Unix(0, 123)
 	repo := &fakeThreadRepo{
 		listAfterResult: []models.Thread{
-			{Model: gorm.Model{ID: 7, CreatedAt: ts}, Title: "t1", UserID: 1},
+			{ID: 7, CreatedAt: ts, Title: "t1", UserID: 1},
 		},
 	}
 	r := newThreadRouter(repo, 0)
@@ -207,7 +206,7 @@ func TestThreadListMineUnauthorized(t *testing.T) {
 func TestThreadListMineOK(t *testing.T) {
 	repo := &fakeThreadRepo{
 		listResult: []models.Thread{
-			{Model: gorm.Model{ID: 1}, Title: "t1", UserID: 1},
+			{ID: 1, Title: "t1", UserID: 1},
 		},
 		countResult: 1,
 	}
@@ -261,7 +260,7 @@ func TestThreadUpdateNotFound(t *testing.T) {
 
 func TestThreadUpdateForbidden(t *testing.T) {
 	repo := &fakeThreadRepo{
-		findResult: &models.Thread{Model: gorm.Model{ID: 1}, UserID: 2},
+		findResult: &models.Thread{ID: 1, UserID: 2},
 	}
 	r := newThreadRouter(repo, 1)
 
@@ -292,7 +291,7 @@ func TestThreadDeleteNotFound(t *testing.T) {
 
 func TestThreadDeleteForbidden(t *testing.T) {
 	repo := &fakeThreadRepo{
-		findResult: &models.Thread{Model: gorm.Model{ID: 1}, UserID: 2},
+		findResult: &models.Thread{ID: 1, UserID: 2},
 	}
 	r := newThreadRouter(repo, 1)
 

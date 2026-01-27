@@ -10,7 +10,6 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 func newThreadLikeRouter(threadRepo repository.ThreadRepository, likeRepo repository.ThreadLikeRepository, userID uint) *gin.Engine {
@@ -54,7 +53,7 @@ func TestThreadLikeNotFound(t *testing.T) {
 
 func TestThreadLikeConflict(t *testing.T) {
 	r := newThreadLikeRouter(
-		&fakeThreadRepo{findResult: &models.Thread{Model: gorm.Model{ID: 1}, UserID: 1}},
+		&fakeThreadRepo{findResult: &models.Thread{ID: 1, UserID: 1}},
 		&fakeThreadLikeRepo{createErr: repository.ErrAlreadyLiked},
 		1,
 	)
@@ -70,7 +69,7 @@ func TestThreadLikeConflict(t *testing.T) {
 
 func TestThreadLikeOK(t *testing.T) {
 	r := newThreadLikeRouter(
-		&fakeThreadRepo{findResult: &models.Thread{Model: gorm.Model{ID: 1}, UserID: 1}},
+		&fakeThreadRepo{findResult: &models.Thread{ID: 1, UserID: 1}},
 		&fakeThreadLikeRepo{},
 		1,
 	)
@@ -95,7 +94,7 @@ func TestThreadLikeOK(t *testing.T) {
 
 func TestThreadUnlikeConflict(t *testing.T) {
 	r := newThreadLikeRouter(
-		&fakeThreadRepo{findResult: &models.Thread{Model: gorm.Model{ID: 1}, UserID: 1}},
+		&fakeThreadRepo{findResult: &models.Thread{ID: 1, UserID: 1}},
 		&fakeThreadLikeRepo{deleteErr: repository.ErrLikeNotFound},
 		1,
 	)
@@ -135,7 +134,7 @@ func TestThreadLikeStatusNotFound(t *testing.T) {
 
 func TestThreadLikeStatusOK(t *testing.T) {
 	r := newThreadLikeRouter(
-		&fakeThreadRepo{findResult: &models.Thread{Model: gorm.Model{ID: 1}, UserID: 1}},
+		&fakeThreadRepo{findResult: &models.Thread{ID: 1, UserID: 1}},
 		&fakeThreadLikeRepo{exists: true},
 		1,
 	)

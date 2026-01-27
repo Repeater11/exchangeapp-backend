@@ -70,7 +70,7 @@ func TestReplyListOK(t *testing.T) {
 		countResult: 1,
 	}
 	threadRepo := &fakeThreadRepo{
-		findResult: &models.Thread{Model: gorm.Model{ID: 1}},
+		findResult: &models.Thread{ID: 1},
 	}
 	r := newReplyRouter(replyRepo, threadRepo, 0)
 
@@ -144,7 +144,7 @@ func TestReplyCreateThreadNotFound(t *testing.T) {
 
 func TestReplyCreateRepoError(t *testing.T) {
 	replyRepo := &fakeReplyRepo{createErr: errors.New("boom")}
-	threadRepo := &fakeThreadRepo{findResult: &models.Thread{Model: gorm.Model{ID: 1}}}
+	threadRepo := &fakeThreadRepo{findResult: &models.Thread{ID: 1}}
 	r := newReplyRouter(replyRepo, threadRepo, 1)
 
 	body := `{"content":"hello"}`
@@ -162,7 +162,7 @@ func TestReplyCreateRepoError(t *testing.T) {
 func TestReplyCreateOK(t *testing.T) {
 	replyRepo := &fakeReplyRepo{}
 	threadRepo := &fakeThreadRepo{
-		findResult: &models.Thread{Model: gorm.Model{ID: 1}},
+		findResult: &models.Thread{ID: 1},
 	}
 	r := newReplyRouter(replyRepo, threadRepo, 1)
 

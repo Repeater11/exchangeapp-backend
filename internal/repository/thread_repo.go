@@ -52,7 +52,7 @@ func (r *ThreadRepo) List(limit, offset int) ([]models.Thread, error) {
 func (r *ThreadRepo) ListAfter(cursorTime time.Time, cursorID uint, limit int) ([]models.Thread, error) {
 	var threads []models.Thread
 	err := r.db.
-		Where("(created_at < ?) or (created_at = ? and id < ?)", cursorTime, cursorTime, cursorID).
+		Where("(created_at, id) < (?, ?)", cursorTime, cursorID).
 		Order("created_at desc, id desc").
 		Limit(limit).
 		Find(&threads).Error
@@ -96,7 +96,7 @@ func (r *ThreadRepo) ListByUserID(userID uint, limit, offset int) ([]models.Thre
 func (r *ThreadRepo) ListByUserIDAfter(userID uint, cursorTime time.Time, cursorID uint, limit int) ([]models.Thread, error) {
 	var threads []models.Thread
 	err := r.db.
-		Where("user_id = ? and ((created_at < ?) or (created_at = ? and id < ?))", userID, cursorTime, cursorTime, cursorID).
+		Where("user_id = ? and (created_at, id) < (?, ?)", userID, cursorTime, cursorID).
 		Order("created_at desc, id desc").
 		Limit(limit).
 		Find(&threads).Error

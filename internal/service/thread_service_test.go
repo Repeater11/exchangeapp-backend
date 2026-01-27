@@ -6,8 +6,6 @@ import (
 	"exchangeapp/internal/models"
 	"testing"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 func TestThreadServiceUpdate(t *testing.T) {
@@ -68,7 +66,7 @@ func TestThreadServiceListAfter(t *testing.T) {
 	ts := time.Unix(0, 123)
 	repo := &fakeThreadRepo{
 		listAfterResult: []models.Thread{
-			{Model: gorm.Model{ID: 7, CreatedAt: ts}, Title: "t1", UserID: 1},
+			{ID: 7, CreatedAt: ts, Title: "t1", UserID: 1},
 		},
 	}
 	svc := NewThreadService(repo, &fakeThreadLikeRepo{}, repo)
@@ -90,7 +88,7 @@ func TestThreadServiceListByUserIDAfter(t *testing.T) {
 	ts := time.Unix(0, 456)
 	repo := &fakeThreadRepo{
 		listByUserAfterRes: []models.Thread{
-			{Model: gorm.Model{ID: 9, CreatedAt: ts}, Title: "t2", UserID: 2},
+			{ID: 9, CreatedAt: ts, Title: "t2", UserID: 2},
 		},
 	}
 	svc := NewThreadService(repo, &fakeThreadLikeRepo{}, repo)
