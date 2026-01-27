@@ -68,11 +68,18 @@ func (s *ThreadService) List(page, size int) (*dto.ThreadListResp, error) {
 		}
 	}
 
+	next := ""
+	if len(ts) > 0 {
+		last := ts[len(ts)-1]
+		next = fmt.Sprintf("%d_%d", last.CreatedAt.UnixNano(), last.ID)
+	}
+
 	return &dto.ThreadListResp{
-		Items: items,
-		Total: total,
-		Page:  page,
-		Size:  size,
+		Items:      items,
+		Total:      total,
+		Page:       page,
+		Size:       size,
+		NextCursor: next,
 	}, nil
 }
 
@@ -128,11 +135,18 @@ func (s *ThreadService) ListByUserID(userID uint, page, size int) (*dto.ThreadLi
 		}
 	}
 
+	next := ""
+	if len(ts) > 0 {
+		last := ts[len(ts)-1]
+		next = fmt.Sprintf("%d_%d", last.CreatedAt.UnixNano(), last.ID)
+	}
+
 	return &dto.ThreadListResp{
-		Items: items,
-		Total: total,
-		Page:  page,
-		Size:  size,
+		Items:      items,
+		Total:      total,
+		Page:       page,
+		Size:       size,
+		NextCursor: next,
 	}, nil
 }
 

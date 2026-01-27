@@ -80,11 +80,18 @@ func (s *ReplyService) ListByThreadID(threadID uint, page, size int) (*dto.Reply
 		}
 	}
 
+	next := ""
+	if len(rs) > 0 {
+		last := rs[len(rs)-1]
+		next = fmt.Sprintf("%d_%d", last.CreatedAt.UnixNano(), last.ID)
+	}
+
 	return &dto.ReplyListResp{
-		Items: items,
-		Total: total,
-		Page:  page,
-		Size:  size,
+		Items:      items,
+		Total:      total,
+		Page:       page,
+		Size:       size,
+		NextCursor: next,
 	}, nil
 }
 
@@ -151,11 +158,18 @@ func (s *ReplyService) ListByUserID(userID uint, page, size int) (*dto.ReplyList
 		}
 	}
 
+	next := ""
+	if len(rs) > 0 {
+		last := rs[len(rs)-1]
+		next = fmt.Sprintf("%d_%d", last.CreatedAt.UnixNano(), last.ID)
+	}
+
 	return &dto.ReplyListResp{
-		Items: items,
-		Total: total,
-		Page:  page,
-		Size:  size,
+		Items:      items,
+		Total:      total,
+		Page:       page,
+		Size:       size,
+		NextCursor: next,
 	}, nil
 }
 
