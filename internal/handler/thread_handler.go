@@ -49,6 +49,7 @@ func (h *ThreadHandler) List(ctx *gin.Context) {
 		resp, err := h.svc.ListAfter(cursorTime, cursorID, size)
 		if err != nil {
 			jsonError(ctx, http.StatusInternalServerError, "获取帖子失败")
+			return
 		}
 		ctx.JSON(http.StatusOK, resp)
 	} else {

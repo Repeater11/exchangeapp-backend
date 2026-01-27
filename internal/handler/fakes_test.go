@@ -90,16 +90,19 @@ func (f *fakeThreadRepo) GetLikeCount(threadID uint) (int64, error) {
 }
 
 type fakeReplyRepo struct {
-	createErr error
-	listErr   error
-	countErr  error
-	findErr   error
-	updateErr error
-	deleteErr error
+	createErr    error
+	listErr      error
+	listAfterErr error
+	countErr     error
+	findErr      error
+	updateErr    error
+	deleteErr    error
 
-	listResult  []models.Reply
-	countResult int64
-	findResult  *models.Reply
+	listResult         []models.Reply
+	listAfterResult    []models.Reply
+	listByUserAfterRes []models.Reply
+	countResult        int64
+	findResult         *models.Reply
 
 	created   *models.Reply
 	updated   *models.Reply
@@ -121,11 +124,25 @@ func (f *fakeReplyRepo) ListByThreadID(threadID uint, limit, offset int) ([]mode
 	return f.listResult, f.listErr
 }
 
+func (f *fakeReplyRepo) ListByThreadIDAfter(threadID uint, cursorTime time.Time, cursorID uint, limit int) ([]models.Reply, error) {
+	if f.listAfterResult != nil || f.listAfterErr != nil {
+		return f.listAfterResult, f.listAfterErr
+	}
+	return f.listResult, f.listErr
+}
+
 func (f *fakeReplyRepo) CountByThreadID(threadID uint) (int64, error) {
 	return f.countResult, f.countErr
 }
 
 func (f *fakeReplyRepo) ListByUserID(userID uint, limit, offset int) ([]models.Reply, error) {
+	return f.listResult, f.listErr
+}
+
+func (f *fakeReplyRepo) ListByUserIDAfter(userID uint, cursorTime time.Time, cursorID uint, limit int) ([]models.Reply, error) {
+	if f.listByUserAfterRes != nil || f.listAfterErr != nil {
+		return f.listByUserAfterRes, f.listAfterErr
+	}
 	return f.listResult, f.listErr
 }
 

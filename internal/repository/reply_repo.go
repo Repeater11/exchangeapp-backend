@@ -4,6 +4,7 @@ import (
 	"errors"
 	"exchangeapp/internal/models"
 	"fmt"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -11,8 +12,10 @@ import (
 type ReplyRepository interface {
 	Create(*models.Reply) error
 	ListByThreadID(threadID uint, limit, offset int) ([]models.Reply, error)
+	ListByThreadIDAfter(threadID uint, cursorTime time.Time, cursorID uint, limit int) ([]models.Reply, error)
 	CountByThreadID(threadID uint) (int64, error)
 	ListByUserID(userID uint, limit, offset int) ([]models.Reply, error)
+	ListByUserIDAfter(userID uint, cursorTime time.Time, cursorID uint, limit int) ([]models.Reply, error)
 	CountByUserID(userID uint) (int64, error)
 	FindByID(id uint) (*models.Reply, error)
 	Update(*models.Reply) error
@@ -45,6 +48,18 @@ func (r *ReplyRepo) ListByThreadID(threadID uint, limit, offset int) ([]models.R
 	return replies, nil
 }
 
+func (r *ReplyRepo) ListByThreadIDAfter(threadID uint, cursorTime time.Time, cursorID uint, limit int) ([]models.Reply, error) {
+	var replies []models.Reply
+	if err := r.db.
+		Where("thread_id = ? and (created_at, id) < (?, ?)", threadID, cursorTime, cursorID).
+		Order("created_at desc, id desc").
+		Limit(limit).
+		Find(&replies).Error; err != nil {
+		return nil, fmt.Errorf("查询回复失败：%w", err)
+	}
+	return replies, nil
+}
+
 func (r *ReplyRepo) CountByThreadID(threadID uint) (int64, error) {
 	var total int64
 	if err := r.db.Model(&models.Reply{}).
@@ -60,6 +75,18 @@ func (r *ReplyRepo) ListByUserID(userID uint, limit, offset int) ([]models.Reply
 	if err := r.db.Where("user_id = ?", userID).
 		Order("created_at desc").
 		Limit(limit).Offset(offset).
+		Find(&replies).Error; err != nil {
+		return nil, fmt.Errorf("查询回复失败：%w", err)
+	}
+	return replies, nil
+}
+
+func (r *ReplyRepo) ListByUserIDAfter(userID uint, cursorTime time.Time, cursorID uint, limit int) ([]models.Reply, error) {
+	var replies []models.Reply
+	if err := r.db.
+		Where("user_id = ? and (created_at, id) < (?, ?)", userID, cursorTime, cursorID).
+		Order("created_at desc, id desc").
+		Limit(limit).
 		Find(&replies).Error; err != nil {
 		return nil, fmt.Errorf("查询回复失败：%w", err)
 	}

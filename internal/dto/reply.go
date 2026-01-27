@@ -15,10 +15,11 @@ type ReplyResp struct {
 }
 
 type ReplyListResp struct {
-	Items []ReplyResp `json:"items"`
-	Total int64       `json:"total"`
-	Page  int         `json:"page"`
-	Size  int         `json:"size"`
+	Items      []ReplyResp `json:"items"`
+	Total      int64       `json:"total"`
+	Page       int         `json:"page"`
+	Size       int         `json:"size"`
+	NextCursor string      `json:"next_cursor"`
 }
 
 type UpdateReplyReq struct {

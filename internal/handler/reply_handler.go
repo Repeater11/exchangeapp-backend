@@ -52,18 +52,36 @@ func (h *ReplyHandler) ListByThreadID(ctx *gin.Context) {
 		return
 	}
 
+	cursor := ctx.Query("cursor")
 	page, size := parsePageSize(ctx.Query("page"), ctx.Query("size"))
-	resp, err := h.svc.ListByThreadID(threadID, page, size)
-	if err != nil {
-		if errors.Is(err, service.ErrThreadNotFound) {
-			jsonError(ctx, http.StatusNotFound, "帖子不存在")
+
+	if cursor != "" {
+		cursorTime, cursorID, ok := parseCursor(cursor)
+		if !ok {
+			jsonError(ctx, http.StatusBadRequest, "cursor 无效")
 			return
 		}
-		jsonError(ctx, http.StatusInternalServerError, "获取回复失败")
-		return
+		resp, err := h.svc.ListByThreadIDAfter(threadID, cursorTime, cursorID, size)
+		if err != nil {
+			if errors.Is(err, service.ErrThreadNotFound) {
+				jsonError(ctx, http.StatusNotFound, "帖子不存在")
+				return
+			}
+			jsonError(ctx, http.StatusInternalServerError, "获取回复失败")
+		}
+		ctx.JSON(http.StatusOK, resp)
+	} else {
+		resp, err := h.svc.ListByThreadID(threadID, page, size)
+		if err != nil {
+			if errors.Is(err, service.ErrThreadNotFound) {
+				jsonError(ctx, http.StatusNotFound, "帖子不存在")
+				return
+			}
+			jsonError(ctx, http.StatusInternalServerError, "获取回复失败")
+			return
+		}
+		ctx.JSON(http.StatusOK, resp)
 	}
-
-	ctx.JSON(http.StatusOK, resp)
 }
 
 func (h *ReplyHandler) ListMine(ctx *gin.Context) {
@@ -72,13 +90,29 @@ func (h *ReplyHandler) ListMine(ctx *gin.Context) {
 		return
 	}
 
+	cursor := ctx.Query("cursor")
 	page, size := parsePageSize(ctx.Query("page"), ctx.Query("size"))
-	resp, err := h.svc.ListByUserID(userID, page, size)
-	if err != nil {
-		jsonError(ctx, http.StatusInternalServerError, "获取回复失败")
-		return
+
+	if cursor != "" {
+		cursorTime, cursorID, ok := parseCursor(cursor)
+		if !ok {
+			jsonError(ctx, http.StatusBadRequest, "cursor 无效")
+			return
+		}
+		resp, err := h.svc.ListByUserIDAfter(userID, cursorTime, cursorID, size)
+		if err != nil {
+			jsonError(ctx, http.StatusInternalServerError, "获取回复失败")
+			return
+		}
+		ctx.JSON(http.StatusOK, resp)
+	} else {
+		resp, err := h.svc.ListByUserID(userID, page, size)
+		if err != nil {
+			jsonError(ctx, http.StatusInternalServerError, "获取回复失败")
+			return
+		}
+		ctx.JSON(http.StatusOK, resp)
 	}
-	ctx.JSON(http.StatusOK, resp)
 }
 
 func (h *ReplyHandler) Update(ctx *gin.Context) {
