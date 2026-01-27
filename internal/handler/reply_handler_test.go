@@ -15,7 +15,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
 )
 
 func newReplyRouter(replyRepo repository.ReplyRepository, threadRepo repository.ThreadRepository, userID uint) *gin.Engine {
@@ -67,7 +66,7 @@ func TestReplyListBadParam(t *testing.T) {
 func TestReplyListOK(t *testing.T) {
 	replyRepo := &fakeReplyRepo{
 		listResult: []models.Reply{
-			{Model: gorm.Model{ID: 1}, ThreadID: 1, UserID: 2, Content: "c"},
+			{ID: 1, ThreadID: 1, UserID: 2, Content: "c"},
 		},
 		countResult: 1,
 	}
@@ -111,7 +110,7 @@ func TestReplyListCursorOK(t *testing.T) {
 	ts := time.Unix(0, 123)
 	replyRepo := &fakeReplyRepo{
 		listAfterResult: []models.Reply{
-			{Model: gorm.Model{ID: 7, CreatedAt: ts}, ThreadID: 1, UserID: 2, Content: "c"},
+			{ID: 7, CreatedAt: ts, ThreadID: 1, UserID: 2, Content: "c"},
 		},
 	}
 	threadRepo := &fakeThreadRepo{findResult: &models.Thread{ID: 1}}
@@ -250,7 +249,7 @@ func TestReplyListMineUnauthorized(t *testing.T) {
 func TestReplyListMineOK(t *testing.T) {
 	replyRepo := &fakeReplyRepo{
 		listResult: []models.Reply{
-			{Model: gorm.Model{ID: 1}, ThreadID: 1, UserID: 1, Content: "c"},
+			{ID: 1, ThreadID: 1, UserID: 1, Content: "c"},
 		},
 		countResult: 1,
 	}
@@ -278,7 +277,7 @@ func TestReplyListMineCursorOK(t *testing.T) {
 	ts := time.Unix(0, 456)
 	replyRepo := &fakeReplyRepo{
 		listByUserAfterRes: []models.Reply{
-			{Model: gorm.Model{ID: 9, CreatedAt: ts}, ThreadID: 1, UserID: 1, Content: "c"},
+			{ID: 9, CreatedAt: ts, ThreadID: 1, UserID: 1, Content: "c"},
 		},
 	}
 	threadRepo := &fakeThreadRepo{}
@@ -324,7 +323,7 @@ func TestReplyUpdateNotFound(t *testing.T) {
 
 func TestReplyUpdateForbidden(t *testing.T) {
 	replyRepo := &fakeReplyRepo{
-		findResult: &models.Reply{Model: gorm.Model{ID: 1}, UserID: 2, ThreadID: 1},
+		findResult: &models.Reply{ID: 1, UserID: 2, ThreadID: 1},
 	}
 	threadRepo := &fakeThreadRepo{}
 	r := newReplyRouter(replyRepo, threadRepo, 1)

@@ -6,8 +6,6 @@ import (
 	"exchangeapp/internal/models"
 	"testing"
 	"time"
-
-	"gorm.io/gorm"
 )
 
 type fakeReplyRepo struct {
@@ -157,7 +155,7 @@ func TestReplyServiceListByThreadIDAfter(t *testing.T) {
 	ts := time.Unix(0, 123)
 	replyRepo := &fakeReplyRepo{
 		listAfterResult: []models.Reply{
-			{Model: gorm.Model{ID: 7, CreatedAt: ts}, ThreadID: 1, UserID: 2, Content: "c"},
+			{ID: 7, CreatedAt: ts, ThreadID: 1, UserID: 2, Content: "c"},
 		},
 	}
 	svc := NewReplyService(replyRepo, &fakeThreadRepo{findResult: thread(1, 1)})
@@ -178,7 +176,7 @@ func TestReplyServiceListByUserIDAfter(t *testing.T) {
 	ts := time.Unix(0, 456)
 	replyRepo := &fakeReplyRepo{
 		listByUserAfterRes: []models.Reply{
-			{Model: gorm.Model{ID: 9, CreatedAt: ts}, ThreadID: 1, UserID: 1, Content: "c"},
+			{ID: 9, CreatedAt: ts, ThreadID: 1, UserID: 1, Content: "c"},
 		},
 	}
 	svc := NewReplyService(replyRepo, &fakeThreadRepo{})

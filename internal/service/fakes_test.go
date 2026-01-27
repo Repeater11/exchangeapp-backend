@@ -126,7 +126,7 @@ func thread(id, userID uint) *models.Thread {
 
 func reply(id, userID, threadID uint) *models.Reply {
 	return &models.Reply{
-		Model:    gormModel(id),
+		ID:       id,
 		UserID:   userID,
 		ThreadID: threadID,
 	}
