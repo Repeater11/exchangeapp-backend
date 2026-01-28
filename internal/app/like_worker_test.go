@@ -66,13 +66,13 @@ func (f *fakeWriter) SetLikeCount(threadID uint, value int64) error {
 	return nil
 }
 
-func TestLikeCountFlusherFlushOnceBatchZero(t *testing.T) {
+func TestLikeCountFlusherFlushOnceBatchZeroUsesDefault(t *testing.T) {
 	counter := &fakeCounter{}
 	flusher := NewLikeCountFlusher(counter, &fakeWriter{}, 0, time.Second)
 	flusher.flushOnce()
 
-	if counter.popCalls != 0 {
-		t.Fatalf("expected no PopDirty calls, got %d", counter.popCalls)
+	if counter.popCalls != 1 {
+		t.Fatalf("expected PopDirty called once, got %d", counter.popCalls)
 	}
 }
 
