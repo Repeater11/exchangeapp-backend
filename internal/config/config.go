@@ -10,10 +10,11 @@ import (
 )
 
 type Config struct {
-	App      AppConfig
-	Database DatabaseConfig
-	Redis    RedisConfig
-	JWT      JWTConfig
+	App        AppConfig
+	Database   DatabaseConfig
+	Redis      RedisConfig
+	JWT        JWTConfig
+	LikeWorker LikeWorkerConfig
 }
 
 type AppConfig struct {
@@ -33,6 +34,11 @@ type RedisConfig struct {
 	Addr     string
 	Password string
 	DB       int
+}
+
+type LikeWorkerConfig struct {
+	Batch           int
+	IntervalSeconds int
 }
 
 type JWTConfig struct {

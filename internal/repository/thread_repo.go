@@ -24,6 +24,10 @@ type ThreadRepository interface {
 	GetLikeCount(threadID uint) (int64, error)
 }
 
+type ThreadLikeCountWriter interface {
+	SetLikeCount(threadID uint, value int64) error
+}
+
 type ThreadRepo struct {
 	db *gorm.DB
 }
@@ -153,6 +157,15 @@ func (r *ThreadRepo) GetLikeCount(threadID uint) (int64, error) {
 		return 0, fmt.Errorf("获取点赞数失败：%w", err)
 	}
 	return res.LikeCount, nil
+}
+
+func (r *ThreadRepo) SetLikeCount(threadID uint, value int64) error {
+	if err := r.db.Model(&models.Thread{}).
+		Where("id = ?", threadID).
+		UpdateColumn("like_count", value).Error; err != nil {
+		return fmt.Errorf("更新点赞数失败：%w", err)
+	}
+	return nil
 }
 
 func (r *ThreadRepo) Transaction(fn func(tx *gorm.DB) error) error {

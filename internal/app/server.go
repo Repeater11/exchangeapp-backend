@@ -24,6 +24,9 @@ type Server struct {
 	db      *gorm.DB
 	rdb     *redis.Client
 	httpSrv *http.Server
+
+	workerCancel context.CancelFunc
+	workerDone   chan struct{}
 }
 
 func NewServer(cfg *config.Config) (*Server, error) {
@@ -68,6 +71,20 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	replySvc := service.NewReplyService(replyRepo, threadRepo)
 	replyHandler := handler.NewReplyHandler(replySvc)
 
+	writer, ok := dbthreadRepo.(repository.ThreadLikeCountWriter)
+	if !ok {
+		return nil, fmt.Errorf("线程仓库不支持 SetLikeCount")
+	}
+	batch := cfg.LikeWorker.Batch
+	interval := time.Duration(cfg.LikeWorker.IntervalSeconds) * time.Second
+	flusher := NewLikeCountFlusher(redisCounter, writer, batch, interval)
+	ctx, cancel := context.WithCancel(context.Background())
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		flusher.Run(ctx)
+	}()
+
 	e.POST("/register", userHandler.Register)
 	e.POST("/login", userHandler.Login)
 	e.GET("/threads", threadHandler.List)
@@ -104,10 +121,12 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	}
 
 	return &Server{
-		e:       e,
-		db:      gormDB,
-		rdb:     rdb,
-		httpSrv: httpSrv,
+		e:            e,
+		db:           gormDB,
+		rdb:          rdb,
+		httpSrv:      httpSrv,
+		workerCancel: cancel,
+		workerDone:   done,
 	}, nil
 }
 
@@ -120,6 +139,16 @@ func (s *Server) Shutdown(ctx context.Context) error {
 	if s.httpSrv != nil {
 		if err := s.httpSrv.Shutdown(ctx); err != nil {
 			httpErr = fmt.Errorf("关闭 HTTP 服务失败：%w", err)
+		}
+	}
+
+	if s.workerCancel != nil {
+		s.workerCancel()
+	}
+	if s.workerDone != nil {
+		select {
+		case <-s.workerDone:
+		case <-time.After(2 * time.Second):
 		}
 	}
 

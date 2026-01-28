@@ -13,6 +13,7 @@ type threadLikeCache interface {
 	setLikeCount(threadID uint, value int64) error
 	TryLockLikeCount(threadID uint, token string, ttl time.Duration) (bool, error)
 	UnlockLikeCount(threadID uint, token string) error
+	MarkDirty(threadID uint) error
 }
 
 type CachedThreadLikeCounter struct {
@@ -30,12 +31,11 @@ func NewCachedThreadLikeCounter(db ThreadRepository, cache *RedisLikeCounter) *C
 }
 
 func (c *CachedThreadLikeCounter) IncrementLikeCount(threadID uint, delta int) error {
-	if err := c.db.IncrementLikeCount(threadID, delta); err != nil {
+	if err := c.cache.IncrementLikeCount(threadID, delta); err != nil {
 		return err
 	}
 
-	_ = c.cache.IncrementLikeCount(threadID, delta)
-	return nil
+	return c.cache.MarkDirty(threadID)
 }
 
 func (c *CachedThreadLikeCounter) GetLikeCount(threadID uint) (int64, error) {

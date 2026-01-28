@@ -78,6 +78,7 @@ type fakeLikeCache struct {
 	incErr    error
 	incCalls  int
 	lastDelta int
+	markCalls int
 	lockErr   error
 	lockCalls int
 	unlockErr error
@@ -109,6 +110,11 @@ func (f *fakeLikeCache) TryLockLikeCount(threadID uint, token string, ttl time.D
 
 func (f *fakeLikeCache) UnlockLikeCount(threadID uint, token string) error {
 	return f.unlockErr
+}
+
+func (f *fakeLikeCache) MarkDirty(threadID uint) error {
+	f.markCalls++
+	return nil
 }
 
 func TestCachedThreadLikeCounterGetLikeCountCacheHit(t *testing.T) {
@@ -165,31 +171,34 @@ func TestCachedThreadLikeCounterGetLikeCountCacheErrorFallback(t *testing.T) {
 	}
 }
 
-func TestCachedThreadLikeCounterIncrementLikeCountDBError(t *testing.T) {
-	db := &fakeThreadRepo{incErr: errors.New("boom")}
-	cache := &fakeLikeCache{}
+func TestCachedThreadLikeCounterIncrementLikeCountCacheError(t *testing.T) {
+	db := &fakeThreadRepo{}
+	cache := &fakeLikeCache{incErr: errors.New("cache")}
 	counter := &CachedThreadLikeCounter{db: db, cache: cache, sf: &singleflight.Group{}}
 
-	if err := counter.IncrementLikeCount(1, 1); err == nil {
+	if err := counter.IncrementLikeCount(1, -1); err == nil {
 		t.Fatalf("expected error, got nil")
 	}
-	if cache.incCalls != 0 {
-		t.Fatalf("expected cache not called, got %d", cache.incCalls)
+	if cache.incCalls != 1 || cache.lastDelta != -1 {
+		t.Fatalf("expected cache delta -1, got calls=%d delta=%d", cache.incCalls, cache.lastDelta)
+	}
+	if cache.markCalls != 0 {
+		t.Fatalf("expected MarkDirty not called, got %d", cache.markCalls)
 	}
 }
 
 func TestCachedThreadLikeCounterIncrementLikeCountOK(t *testing.T) {
 	db := &fakeThreadRepo{}
-	cache := &fakeLikeCache{incErr: errors.New("cache")}
+	cache := &fakeLikeCache{}
 	counter := &CachedThreadLikeCounter{db: db, cache: cache, sf: &singleflight.Group{}}
 
-	if err := counter.IncrementLikeCount(1, -1); err != nil {
+	if err := counter.IncrementLikeCount(1, 1); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if db.incCalls != 1 || db.lastDelta != -1 {
-		t.Fatalf("expected db delta -1, got calls=%d delta=%d", db.incCalls, db.lastDelta)
+	if cache.incCalls != 1 || cache.lastDelta != 1 {
+		t.Fatalf("expected cache delta 1, got calls=%d delta=%d", cache.incCalls, cache.lastDelta)
 	}
-	if cache.incCalls != 1 || cache.lastDelta != -1 {
-		t.Fatalf("expected cache delta -1, got calls=%d delta=%d", cache.incCalls, cache.lastDelta)
+	if cache.markCalls != 1 {
+		t.Fatalf("expected MarkDirty called once, got %d", cache.markCalls)
 	}
 }

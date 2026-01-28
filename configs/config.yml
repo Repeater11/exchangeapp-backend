@@ -17,3 +17,7 @@ redis:
   addr: "127.0.0.1:6379"
   password:
   db: 0
+
+like_worker:
+  batch: 200
+  interval_seconds: 1
